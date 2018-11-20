@@ -33,14 +33,20 @@
                     android:layout_weight="1" />
                 <TextView
                     android:layout_width="60dp"
-                    android:layout_height="fill_parent"
+                    android:layout_height="match_parent"
                     android:text="×"
-                    android:textSize="50sp"
+                    android:textSize="40sp"
                     android:gravity="center"
                     android:clickable="true"
                     android:onClick="close" />
             </LinearLayout>
         </android.support.v7.widget.Toolbar>
+        <TextView
+            android:id="@+id/current"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="test"
+            android:textColor="#FFFFFF" />
     </LinearLayout>
 
 

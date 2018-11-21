@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Gulliver</string>
+    <string name="latitude_label">latitude</string>
+    <string name="longitude_label">longitude</string>
+    <string name="no_location_detected">longitude</string>
+    <string name="main_activity_container">longitude</string>
+    <string name="permission_rationale">longitude</string>
+    <string name="permission_denied_explanation">longitude</string>
+    <string name="settings">longitude</string>
 </resources>

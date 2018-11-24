@@ -74,11 +74,11 @@ class MainActivity : AppCompatActivity() {
                     mLongitudeText!!.setText(mLongitudeLabel+":   "+
                             (mLastLocation )!!.longitude)
 
-                    val aa = Geocoder(this)
-                    println((mLastLocation)!!.latitude)
-                    println((mLastLocation)!!.longitude)
-                    println(aa.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10))
-                    println(aa.getFromLocationName("Syracuse", 10))
+//                    val aa = Geocoder(this)
+//                    println((mLastLocation)!!.latitude)
+//                    println((mLastLocation)!!.longitude)
+//                    println(aa.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10))
+//                    println(aa.getFromLocationName("Syracuse", 10))
                 } else {
                     Log.w(TAG, "getLastLocation:exception", task.exception)
                     showMessage(getString(R.string.no_location_detected))

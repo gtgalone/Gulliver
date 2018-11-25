@@ -16,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.system.exitProcess
 
 
@@ -31,8 +32,7 @@ class MainActivity : AppCompatActivity() {
     protected var mLastLocation: Location? = null
     private var mLatitudeLabel: String? = null
     private var mLongitudeLabel: String? = null
-    private var mLatitudeText: TextView? = null
-    private var mLongitudeText: TextView? = null
+    private var mLocationLabel: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +40,7 @@ class MainActivity : AppCompatActivity() {
 
         mLatitudeLabel = resources.getString(R.string.latitude_label)
         mLongitudeLabel = resources.getString(R.string.longitude_label)
-        mLatitudeText = findViewById<View>(R.id.latitude_text) as TextView
-        mLongitudeText = findViewById<View>(R.id.longitude_text) as TextView
+        mLocationLabel = resources.getString(R.string.location_label)
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
     }
@@ -67,18 +66,16 @@ class MainActivity : AppCompatActivity() {
         mFusedLocationClient!!.lastLocation
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful && task.result != null) {
-                    mLastLocation = task.result
-                    mLatitudeText!!.setText(
-                        mLatitudeLabel+":   "+
-                                (mLastLocation )!!.latitude)
-                    mLongitudeText!!.setText(mLongitudeLabel+":   "+
-                            (mLastLocation )!!.longitude)
+                    val geo = Geocoder(this)
 
-//                    val aa = Geocoder(this)
-//                    println((mLastLocation)!!.latitude)
-//                    println((mLastLocation)!!.longitude)
-//                    println(aa.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10))
-//                    println(aa.getFromLocationName("Syracuse", 10))
+                    mLastLocation = task.result
+                    latitude_text!!.text = (mLastLocation )!!.latitude.toString()
+                    longitude_text!!.text = (mLastLocation )!!.longitude.toString()
+                    location_text!!.text = geo.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10)[0].locality
+
+                    println((mLastLocation)!!.latitude)
+                    println((mLastLocation)!!.longitude)
+                    println(geo.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10)[0].locality)
                 } else {
                     Log.w(TAG, "getLastLocation:exception", task.exception)
                     showMessage(getString(R.string.no_location_detected))

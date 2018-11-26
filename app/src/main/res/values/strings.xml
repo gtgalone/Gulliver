@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">Gulliver</string>
-    <string name="latitude_label">latitude: </string>
-    <string name="longitude_label">longitude: </string>
-    <string name="location_label">location: </string>
-    <string name="no_location_detected">longitude</string>
-    <string name="main_activity_container">longitude</string>
-    <string name="permission_rationale">longitude</string>
-    <string name="permission_denied_explanation">longitude</string>
-    <string name="settings">longitude</string>
+    <string name="latitude_label">latitude:</string>
+    <string name="longitude_label">longitude:</string>
+    <string name="location_label">location:</string>
+    <string name="no_location_detected">no location detected</string>
+    <string name="main_activity_container">main activity</string>
+    <string name="permission_rationale">permission rationale</string>
+    <string name="permission_denied_explanation">permission denied</string>
+    <string name="settings">settings</string>
 </resources>

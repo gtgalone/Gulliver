@@ -30,19 +30,12 @@ class MainActivity : AppCompatActivity() {
      * Represents a geographical location.
      */
     protected var mLastLocation: Location? = null
-    private var mLatitudeLabel: String? = null
-    private var mLongitudeLabel: String? = null
-    private var mLocationLabel: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        mLatitudeLabel = resources.getString(R.string.latitude_label)
-        mLongitudeLabel = resources.getString(R.string.longitude_label)
-        mLocationLabel = resources.getString(R.string.location_label)
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
     }
 
     public override fun onStart() {
@@ -72,6 +65,7 @@ class MainActivity : AppCompatActivity() {
                     latitude_text!!.text = (mLastLocation )!!.latitude.toString()
                     longitude_text!!.text = (mLastLocation )!!.longitude.toString()
                     location_text!!.text = geo.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10)[0].locality
+                    channel_area.text = geo.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10)[0].locality
 
                     println((mLastLocation)!!.latitude)
                     println((mLastLocation)!!.longitude)
@@ -110,6 +104,8 @@ class MainActivity : AppCompatActivity() {
     private fun checkPermissions(): Boolean {
         val permissionState = ActivityCompat.checkSelfPermission(this,
             android.Manifest.permission.ACCESS_COARSE_LOCATION)
+        println("hello!!!!!!")
+        println(permissionState)
         return permissionState == PackageManager.PERMISSION_GRANTED
     }
     private fun startLocationPermissionRequest() {

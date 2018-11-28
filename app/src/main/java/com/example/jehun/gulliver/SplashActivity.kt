@@ -3,7 +3,6 @@ package com.example.jehun.gulliver
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
 
 class SplashActivity : AppCompatActivity() {
 
@@ -11,9 +10,11 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-        Handler().postDelayed({
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-        }, 5000)
+        try {
+            Thread.sleep(2000)
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
+        startActivity(Intent(this, MainActivity::class.java))
     }
 }

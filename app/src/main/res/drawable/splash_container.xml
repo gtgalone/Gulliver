@@ -4,7 +4,7 @@
     <!-- Background color -->
     <item android:drawable="@color/colorAccent" />
 
-    <!-- logo -->
+    <!-- Logo -->
     <item>
         <bitmap
             android:gravity="center"

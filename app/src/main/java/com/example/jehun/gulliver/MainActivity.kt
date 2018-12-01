@@ -61,6 +61,7 @@ class MainActivity : AppCompatActivity() {
                 if (task.isSuccessful && task.result != null) {
                     val geo = Geocoder(this)
 
+                    var locality = geo.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10)[0].locality
                     mLastLocation = task.result
                     latitude_text!!.text = (mLastLocation )!!.latitude.toString()
                     longitude_text!!.text = (mLastLocation )!!.longitude.toString()
@@ -102,10 +103,12 @@ class MainActivity : AppCompatActivity() {
      * Return the current state of the permissions needed.
      */
     private fun checkPermissions(): Boolean {
+        val geo = Geocoder(this)
+        println("hello!!!!!!")
+        println(geo.getFromLocation(43.029785,-76.1255327, 10)[0].locality)
+
         val permissionState = ActivityCompat.checkSelfPermission(this,
             android.Manifest.permission.ACCESS_COARSE_LOCATION)
-        println("hello!!!!!!")
-        println(permissionState)
         return permissionState == PackageManager.PERMISSION_GRANTED
     }
     private fun startLocationPermissionRequest() {

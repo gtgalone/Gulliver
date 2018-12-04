@@ -5,9 +5,9 @@
     <item android:drawable="@color/colorAccent" />
 
     <!-- Logo -->
-    <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@drawable/splash" />
+    <item
+        android:top="550px"
+        android:bottom="550px"
+        android:drawable="@drawable/splash">
     </item>
 </layer-list>

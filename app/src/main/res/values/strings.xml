@@ -8,4 +8,8 @@
     <string name="permission_rationale">permission rationale</string>
     <string name="permission_denied_explanation">permission denied</string>
     <string name="settings">settings</string>
+    <string name="channel_area1">%1$s (%2$s, %3$s)</string>
+    <string name="channel_area2">%1$s (%2$s)</string>
+    <string name="close">×</string>
+    <string name="google_signin_button">Sign In with Google</string>
 </resources>

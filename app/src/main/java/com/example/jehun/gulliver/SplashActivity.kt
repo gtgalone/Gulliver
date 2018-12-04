@@ -11,10 +11,11 @@ class SplashActivity : AppCompatActivity() {
         setContentView(R.layout.activity_splash)
 
         try {
-            Thread.sleep(2000)
+            Thread.sleep(4000)
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
-        startActivity(Intent(this, MainActivity::class.java))
+        startActivity(Intent(this, SignInActivity::class.java))
+        finish()
     }
 }

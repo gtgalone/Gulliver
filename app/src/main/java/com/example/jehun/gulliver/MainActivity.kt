@@ -61,16 +61,28 @@ class MainActivity : AppCompatActivity() {
                 if (task.isSuccessful && task.result != null) {
                     val geo = Geocoder(this)
 
-                    var locality = geo.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10)[0].locality
                     mLastLocation = task.result
-                    latitude_text!!.text = (mLastLocation )!!.latitude.toString()
-                    longitude_text!!.text = (mLastLocation )!!.longitude.toString()
-                    location_text!!.text = geo.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10)[0].locality
-                    channel_area.text = geo.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10)[0].locality
+                    val latitude = (mLastLocation )!!.latitude
+                    val longitude = (mLastLocation )!!.longitude
 
-                    println((mLastLocation)!!.latitude)
-                    println((mLastLocation)!!.longitude)
-                    println(geo.getFromLocation((mLastLocation)!!.latitude, (mLastLocation)!!.longitude, 10)[0].locality)
+                    val firstLocation = geo.getFromLocation(36.962070, 127.604155, 10)[0]
+                    val countryName = firstLocation.countryName
+                    val adminArea = firstLocation.adminArea
+                    val locality = firstLocation.locality
+
+                    latitude_text!!.text = latitude.toString()
+                    longitude_text!!.text = longitude.toString()
+
+                    var channelArea: String
+                    if (adminArea == locality) {
+                        channelArea = getString(R.string.channel_area2, locality, countryName)
+                    } else {
+                        channelArea = getString(R.string.channel_area1, locality, adminArea, countryName)
+                    }
+
+                    location_text!!.text = channelArea
+                    channel_area.text = channelArea
+
                 } else {
                     Log.w(TAG, "getLastLocation:exception", task.exception)
                     showMessage(getString(R.string.no_location_detected))

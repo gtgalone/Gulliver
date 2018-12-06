@@ -4,11 +4,13 @@
         <item name="android:windowBackground">@drawable/splash_container</item>
     </style>
 
+    <style name="SignInTheme" parent="Theme.AppCompat.NoActionBar" />
+
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:textColor">@color/colorWhite</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="android:textColor">@color/colorText</item>
     </style>
 
 </resources>

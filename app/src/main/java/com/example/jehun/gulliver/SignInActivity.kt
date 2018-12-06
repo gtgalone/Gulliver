@@ -2,7 +2,7 @@ package com.example.jehun.gulliver
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -12,28 +12,22 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import kotlinx.android.synthetic.main.activity_signin.*
+import com.google.firebase.database.FirebaseDatabase
+import kotlinx.android.synthetic.main.activity_sign_in.*
 
 class SignInActivity : AppCompatActivity() {
     private lateinit var mAuth : FirebaseAuth
     private lateinit var mGoogleSignInClient : GoogleSignInClient
 
-    override fun onStart() {
-        super.onStart()
-
-        val currentUser = mAuth.currentUser
-
-        if (currentUser != null) {
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
-        }
+    companion object {
+        const val RC_SIGN_IN = 0
+        const val TAG = "SignInActivity"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_signin)
-
+        setContentView(R.layout.activity_sign_in)
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
@@ -51,46 +45,54 @@ class SignInActivity : AppCompatActivity() {
 
     private fun signIn() {
         val signInIntent = mGoogleSignInClient.signInIntent
-        startActivityForResult(signInIntent, Constants.RC_SIGN_IN)
+        startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        Log.d(Constants.TAG, requestCode.toString())
-        if (requestCode == Constants.RC_SIGN_IN) {
+        Log.d(TAG, requestCode.toString())
+        if (requestCode == RC_SIGN_IN) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val account = task.result!!
                 firebaseAuthWithGoogle(account)
             } catch (e: ApiException) {
-                Log.w(Constants.TAG, "Google sign in failed", e)
+                Log.w(TAG, "Google sign in failed", e)
             }
         }
     }
 
     private fun firebaseAuthWithGoogle(acct: GoogleSignInAccount) {
-        Log.d(Constants.TAG, "firebaseAuthWithGoogle:" + acct.id)
+        Log.d(TAG, "firebaseAuthWithGoogle:" + acct.id)
 
         val credential = GoogleAuthProvider.getCredential(acct.idToken, null)
         mAuth.signInWithCredential(credential)
             .addOnCompleteListener {
                 if (it.isSuccessful) {
-                    Log.d(Constants.TAG, "signInWithCredential:success")
-                    val user = mAuth.currentUser
-                    Log.d(Constants.TAG, user?.displayName)
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
+                    Log.d(TAG, "signInWithCredential:success")
+                    val user = mAuth.currentUser!!
+                    Log.d(TAG, user.displayName)
+                    Log.d(TAG, user.email)
+                    Log.d(TAG, user.photoUrl.toString())
+                    Log.d(TAG, user.providerId)
+
+                    saveUserToFirebaseDatabase(user.displayName!!, user.email!!, user.photoUrl.toString())
+
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(intent)
                 } else {
-                    Log.d(Constants.TAG, "signInWithCredential:failure", it.exception)
+                    Log.d(TAG, "signInWithCredential:failure", it.exception)
                     Toast.makeText(this, "Authentication Failed.", Toast.LENGTH_SHORT).show()
                 }
             }
     }
-}
 
-class Constants {
-    companion object {
-        const val RC_SIGN_IN = 0
-        const val TAG = "SignInActivity"
+    private fun saveUserToFirebaseDatabase(displayName: String, email: String, photoUrl: String) {
+        val uid = FirebaseAuth.getInstance().uid ?: ""
+        val ref = FirebaseDatabase.getInstance().getReference("/users/$uid")
+        ref.setValue(User(uid, displayName, email, photoUrl))
     }
 }
+
+class User(val uid: String, val displayName: String, val email: String, val photoUrl: String)

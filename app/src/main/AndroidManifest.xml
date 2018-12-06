@@ -18,6 +18,15 @@
             android:name=".SplashActivity"
             android:theme="@style/SplashTheme">
             <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Accepts URIs that begin with "http://www.example.com/gizmos” -->
+                <data android:scheme="http"
+                      android:host="gulliver.ga" />
+                <!-- note that the leading "/" is required for pathPrefix-->
+            </intent-filter>
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -25,7 +34,15 @@
         </activity>
         <activity android:name=".MainActivity">
         </activity>
-        <activity android:name=".SignInActivity">
+        <activity
+            android:name=".SignInActivity"
+            android:theme="@style/SignInTheme">
+        </activity>
+        <activity
+            android:name=".DirectMessageActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
         </activity>
     </application>
 

@@ -1,8 +1,9 @@
 package com.example.jehun.gulliver
 
 import android.content.Intent
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.google.firebase.auth.FirebaseAuth
 
 class SplashActivity : AppCompatActivity() {
 
@@ -11,11 +12,23 @@ class SplashActivity : AppCompatActivity() {
         setContentView(R.layout.activity_splash)
 
         try {
-            Thread.sleep(4000)
+            Thread.sleep(2000)
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
-        startActivity(Intent(this, SignInActivity::class.java))
-        finish()
+
+        val uid = FirebaseAuth.getInstance().uid
+
+        val intent: Intent
+
+        if (uid == null) {
+            intent = Intent(this, SignInActivity::class.java)
+        } else {
+            intent = Intent(this, MainActivity::class.java)
+        }
+
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        startActivity(intent)
     }
 }

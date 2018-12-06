@@ -6,22 +6,24 @@ import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.net.Uri
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.support.v4.app.ActivityCompat
+import androidx.core.app.ActivityCompat
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity() {
-
     /**
      * Provides the entry point to the Fused Location Provider API.
      */
@@ -29,13 +31,11 @@ class MainActivity : AppCompatActivity() {
     /**
      * Represents a geographical location.
      */
-    protected var mLastLocation: Location? = null
+    private var mLastLocation: Location? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+    companion object {
+        const val TAG = "LocationProvider"
+        const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
     }
 
     public override fun onStart() {
@@ -45,7 +45,40 @@ class MainActivity : AppCompatActivity() {
         } else {
             getLastLocation()
         }
-    }/**
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+    }
+
+    private fun changeActivity(activity: Class<*>, reset: Boolean = true) {
+        val intent = Intent(this, activity)
+        if (reset) intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        when (item?.itemId) {
+            R.id.menu_sign_out -> {
+                FirebaseAuth.getInstance().signOut()
+                changeActivity(SignInActivity::class.java)
+            }
+            R.id.menu_direct_message -> {
+                changeActivity(DirectMessageActivity::class.java, false)
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.nav_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    /**
      * Provides a simple way of getting a device's location and is well suited for
      * applications that do not require a fine-grained location and that do not need location
      * updates. Gets the best and most recent location currently available, which may be null
@@ -65,7 +98,7 @@ class MainActivity : AppCompatActivity() {
                     val latitude = (mLastLocation )!!.latitude
                     val longitude = (mLastLocation )!!.longitude
 
-                    val firstLocation = geo.getFromLocation(36.962070, 127.604155, 10)[0]
+                    val firstLocation = geo.getFromLocation(latitude, longitude, 10)[0]
                     val countryName = firstLocation.countryName
                     val adminArea = firstLocation.adminArea
                     val locality = firstLocation.locality
@@ -81,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     location_text!!.text = channelArea
-                    channel_area.text = channelArea
+                    supportActionBar?.title = channelArea
 
                 } else {
                     Log.w(TAG, "getLastLocation:exception", task.exception)
@@ -192,8 +225,4 @@ class MainActivity : AppCompatActivity() {
         exitProcess(-1)
     }
 
-    companion object {
-        private val TAG = "LocationProvider"
-        private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
-    }
 }

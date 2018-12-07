@@ -1,57 +1,59 @@
 package com.example.jehun.gulliver
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.example.jehun.gulliver.models.User
+import com.example.jehun.gulliver.models.UserItem
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.squareup.picasso.Picasso
 import com.xwray.groupie.GroupAdapter
-import com.xwray.groupie.Item
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_people.*
-import kotlinx.android.synthetic.main.activity_people_item.view.*
 
 class PeopleActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_people)
+  companion object {
+    const val USER_KEY = "USER_KEY"
+  }
 
-        supportActionBar!!.title = "People"
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_people)
 
-        fetchUsers()
-    }
+    supportActionBar!!.title = "People"
 
-    private fun fetchUsers() {
-        val ref = FirebaseDatabase.getInstance().getReference("/users")
+    fetchUsers()
+  }
 
-        ref.addListenerForSingleValueEvent(object: ValueEventListener {
-            override fun onDataChange(p0: DataSnapshot) {
-                val adapter = GroupAdapter<ViewHolder>()
-                p0.children.forEach {
-                    val user = it.getValue(User::class.java)
+  private fun fetchUsers() {
+    val ref = FirebaseDatabase.getInstance().getReference("/users")
 
-                    if (user != null) adapter.add(UserItem(user))
-                }
-                recyclerview_people.adapter = adapter
-            }
+    ref.addListenerForSingleValueEvent(object : ValueEventListener {
+      override fun onDataChange(p0: DataSnapshot) {
+        val adapter = GroupAdapter<ViewHolder>()
+        p0.children.forEach {
+          val user = it.getValue(User::class.java)
 
-            override fun onCancelled(p0: DatabaseError) {
-            }
-        })
+          if (user != null) adapter.add(UserItem(user))
+          adapter.setOnItemClickListener { item, view ->
 
-    }
+            val userItem = item as UserItem
 
-}
+            val intent = Intent(view.context, DirectMessageLogActivity::class.java)
+            intent.putExtra(USER_KEY, userItem.user)
+            startActivity(intent)
+          }
+        }
+        recycler_view_people.adapter = adapter
+      }
 
-class UserItem(val user: User): Item<ViewHolder>() {
-    override fun bind(viewHolder: ViewHolder, position: Int) {
-        viewHolder.itemView.people_item_display_name_text_view.text = user.displayName
-        Picasso.get().load(user.photoUrl).into(viewHolder.itemView.people_item_photo_image_view)
-    }
+      override fun onCancelled(p0: DatabaseError) {
+      }
+    })
 
-    override fun getLayout(): Int {
-        return R.layout.activity_people_item
-    }
+  }
+
 }

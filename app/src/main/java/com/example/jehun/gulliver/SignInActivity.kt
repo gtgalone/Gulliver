@@ -95,4 +95,6 @@ class SignInActivity : AppCompatActivity() {
     }
 }
 
-class User(val uid: String, val displayName: String, val email: String, val photoUrl: String)
+class User(val uid: String, val displayName: String, val email: String, val photoUrl: String) {
+    constructor() : this("", "", "", "")
+}

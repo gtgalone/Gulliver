@@ -1,11 +1,14 @@
 package com.example.jehun.gulliver
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.net.Uri
+import android.os.AsyncTask
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
@@ -16,10 +19,14 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import kotlin.system.exitProcess
 
 
@@ -28,10 +35,6 @@ class MainActivity : AppCompatActivity() {
      * Provides the entry point to the Fused Location Provider API.
      */
     private var mFusedLocationClient: FusedLocationProviderClient? = null
-    /**
-     * Represents a geographical location.
-     */
-    private var mLastLocation: Location? = null
 
     companion object {
         const val TAG = "LocationProvider"
@@ -62,12 +65,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         when (item?.itemId) {
-            R.id.menu_sign_out -> {
-                FirebaseAuth.getInstance().signOut()
-                changeActivity(SignInActivity::class.java)
+            R.id.menu_people -> {
+                changeActivity(PeopleActivity::class.java, false)
             }
             R.id.menu_direct_message -> {
                 changeActivity(DirectMessageActivity::class.java, false)
+            }
+            R.id.menu_sign_out -> {
+                FirebaseAuth.getInstance().signOut()
+                changeActivity(SignInActivity::class.java)
             }
         }
         return super.onOptionsItemSelected(item)
@@ -92,29 +98,37 @@ class MainActivity : AppCompatActivity() {
         mFusedLocationClient!!.lastLocation
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful && task.result != null) {
-                    val geo = Geocoder(this)
+                    Log.d("test", "before doasync")
 
-                    mLastLocation = task.result
-                    val latitude = (mLastLocation )!!.latitude
-                    val longitude = (mLastLocation )!!.longitude
+                    doAsync {
 
-                    val firstLocation = geo.getFromLocation(latitude, longitude, 10)[0]
-                    val countryName = firstLocation.countryName
-                    val adminArea = firstLocation.adminArea
-                    val locality = firstLocation.locality
+                        val geo = Geocoder(this@MainActivity)
+                        val mLastLocation = task.result!!
 
-                    latitude_text!!.text = latitude.toString()
-                    longitude_text!!.text = longitude.toString()
+                        val latitude = mLastLocation.latitude
+                        val longitude = mLastLocation.longitude
 
-                    var channelArea: String
-                    if (adminArea == locality) {
-                        channelArea = getString(R.string.channel_area2, locality, countryName)
-                    } else {
-                        channelArea = getString(R.string.channel_area1, locality, adminArea, countryName)
+                        val firstLocation = geo.getFromLocation(latitude, longitude, 10)[0]
+
+                        val countryName = firstLocation.countryName
+                        val adminArea = firstLocation.adminArea
+                        val locality = firstLocation.locality
+
+                        uiThread {
+                            latitude_text!!.text = latitude.toString()
+                            longitude_text!!.text = longitude.toString()
+
+                            val channelArea: String
+                            if (adminArea == locality) {
+                                channelArea = getString(R.string.channel_area2, locality, countryName)
+                            } else {
+                                channelArea = getString(R.string.channel_area1, locality, adminArea, countryName)
+                            }
+
+                            location_text!!.text = channelArea
+                            supportActionBar?.title = channelArea
+                        }
                     }
-
-                    location_text!!.text = channelArea
-                    supportActionBar?.title = channelArea
 
                 } else {
                     Log.w(TAG, "getLastLocation:exception", task.exception)
@@ -122,6 +136,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
     }
+
     /**
      * Shows a [] using `text`.
      * @param text The Snackbar text.
@@ -132,6 +147,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this@MainActivity, text, Toast.LENGTH_LONG).show()
         }
     }
+
     /**
      * Shows a [].
      * @param mainTextStringId The id for the string resource for the Snackbar text.
@@ -144,26 +160,26 @@ class MainActivity : AppCompatActivity() {
                              listener: View.OnClickListener) {
         Toast.makeText(this@MainActivity, getString(mainTextStringId), Toast.LENGTH_LONG).show()
     }
+
     /**
      * Return the current state of the permissions needed.
      */
     private fun checkPermissions(): Boolean {
-        val geo = Geocoder(this)
-        println("hello!!!!!!")
-        println(geo.getFromLocation(43.029785,-76.1255327, 10)[0].locality)
 
-        val permissionState = ActivityCompat.checkSelfPermission(this,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION)
+        val permissionState = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.ACCESS_COARSE_LOCATION)
         return permissionState == PackageManager.PERMISSION_GRANTED
     }
+
     private fun startLocationPermissionRequest() {
         ActivityCompat.requestPermissions(this@MainActivity,
-            arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION),
+            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
             REQUEST_PERMISSIONS_REQUEST_CODE)
     }
+
     private fun requestPermissions() {
         val shouldProvideRationale = ActivityCompat.shouldShowRequestPermissionRationale(this,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION)
+            Manifest.permission.ACCESS_COARSE_LOCATION)
         // Provide an additional rationale to the user. This would happen if the user denied the
         // request previously, but didn't check the "Don't ask again" checkbox.
         if (shouldProvideRationale) {
@@ -181,6 +197,7 @@ class MainActivity : AppCompatActivity() {
             startLocationPermissionRequest()
         }
     }
+
     /**
      * Callback received when a permissions request has been completed.
      */

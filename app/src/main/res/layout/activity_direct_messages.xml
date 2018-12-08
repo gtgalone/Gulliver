@@ -6,7 +6,7 @@
                                                    android:layout_height="match_parent">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_direct_message"
+        android:id="@+id/recycler_view_direct_messages"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/colorSecondary"

@@ -5,20 +5,20 @@
                                                    android:layout_height="match_parent">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_direct_message_log"
+        android:id="@+id/recycler_view_direct_messages_log"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/colorSecondary"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:stackFromEnd="true"
-        app:layout_constraintBottom_toTopOf="@+id/direct_message_log_edit_text"
+        app:layout_constraintBottom_toTopOf="@+id/direct_messages_log_edit_text"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
-        android:id="@+id/direct_message_log_edit_text"
+        android:id="@+id/direct_messages_log_edit_text"
         android:layout_width="0dp"
         android:layout_height="50dp"
         android:background="@color/colorWhite"
@@ -28,12 +28,12 @@
         android:paddingLeft="12dp"
         android:paddingRight="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/direct_message_log_send_button"
+        app:layout_constraintEnd_toStartOf="@+id/direct_messages_log_send_button"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/recycler_view_direct_message_log" />
+        app:layout_constraintTop_toBottomOf="@+id/recycler_view_direct_messages_log" />
 
     <Button
-        android:id="@+id/direct_message_log_send_button"
+        android:id="@+id/direct_messages_log_send_button"
         android:layout_width="87dp"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimary"
@@ -42,6 +42,6 @@
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/direct_message_log_edit_text"
-        app:layout_constraintTop_toBottomOf="@+id/recycler_view_direct_message_log" />
+        app:layout_constraintStart_toEndOf="@+id/direct_messages_log_edit_text"
+        app:layout_constraintTop_toBottomOf="@+id/recycler_view_direct_messages_log" />
 </androidx.constraintlayout.widget.ConstraintLayout>

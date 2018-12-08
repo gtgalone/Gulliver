@@ -4,11 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Address
 import android.location.Geocoder
-import android.location.Location
 import android.net.Uri
-import android.os.AsyncTask
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
@@ -17,13 +14,11 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.example.jehun.gulliver.models.User
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -91,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         changeActivity(PeopleActivity::class.java, false)
       }
       R.id.menu_direct_message -> {
-        changeActivity(DirectMessageActivity::class.java, false)
+        changeActivity(DirectMessagesActivity::class.java, false)
       }
       R.id.menu_sign_out -> {
         FirebaseAuth.getInstance().signOut()

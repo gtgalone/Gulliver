@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Gulliver</string>
+    <string name="latitude_label">latitude:</string>
+    <string name="longitude_label">longitude:</string>
+    <string name="location_label">location:</string>
+    <string name="no_location_detected">no location detected</string>
+    <string name="main_activity_container">main activity</string>
+    <string name="permission_rationale">permission rationale</string>
+    <string name="permission_denied_explanation">permission denied</string>
+    <string name="settings">settings</string>
+    <string name="channel_area1">%1$s (%2$s, %3$s)</string>
+    <string name="channel_area2">%1$s (%2$s)</string>
+    <string name="close">×</string>
+    <string name="google_signin_button">Sign In with Google</string>
+    <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
+    <string name="default_notification_channel_name" translatable="true">Weather</string>
+    <string name="fcm_message">fcm_message</string>
+</resources>

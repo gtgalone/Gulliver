@@ -1,0 +1,20 @@
+{
+  "database": {
+    "rules": {
+      "users": {
+        ".read": true,
+        "$uid": {
+          ".write": "$uid === auth.uid"
+        }
+      },
+      "direct-messages": {
+        ".write": true,
+        ".read": true
+      },
+      "direct-messages-log": {
+        ".write": true,
+        ".read": true
+      }
+    }
+  }
+}

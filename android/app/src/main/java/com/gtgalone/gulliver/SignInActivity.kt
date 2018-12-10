@@ -14,6 +14,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.iid.FirebaseInstanceId
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
 class SignInActivity : AppCompatActivity() {
@@ -92,6 +93,15 @@ class SignInActivity : AppCompatActivity() {
   private fun saveUserToFirebaseDatabase(displayName: String, email: String, photoUrl: String) {
     val uid = FirebaseAuth.getInstance().uid ?: ""
     val ref = FirebaseDatabase.getInstance().getReference("/users/$uid")
-    ref.setValue(User(uid, displayName, email, photoUrl))
+
+    FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
+      val token = it.result?.token ?: ""
+
+      ref.setValue(User(uid, displayName, email, photoUrl)).addOnCompleteListener {
+        val refToken = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
+
+        refToken.setValue(true)
+      }
+    }
   }
 }

@@ -12,6 +12,7 @@ import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.functions.FirebaseFunctions
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_direct_messages_log.*
@@ -22,10 +23,14 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
   val currentUser = MainActivity.currentUser!!
 
+  private lateinit var functions: FirebaseFunctions
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_direct_messages_log)
     recycler_view_direct_messages_log.adapter = adapter
+
+    functions = FirebaseFunctions.getInstance()
 
     val toUser = intent.getParcelableExtra<User>(PeopleActivity.USER_KEY)
 
@@ -88,11 +93,12 @@ class DirectMessagesLogActivity : AppCompatActivity() {
     val toId = toUser.uid
     if (direct_messages_log_edit_text.text.isEmpty()) return
 
-    Log.d("test", "$fromId, $toId")
     val fromLogRef = FirebaseDatabase.getInstance().getReference("/direct-messages-log/$fromId/$toId").push()
     val toLogRef = FirebaseDatabase.getInstance().getReference("/direct-messages-log/$toId/$fromId").push()
 
-    val directMessage = DirectMessageLog(fromLogRef.key!!, direct_messages_log_edit_text.text.toString(), fromId, toId, System.currentTimeMillis() / 1000)
+    val text = direct_messages_log_edit_text.text.toString()
+
+    val directMessage = DirectMessageLog(fromLogRef.key!!, text, fromId, toId, System.currentTimeMillis() / 1000)
 
     fromLogRef.setValue(directMessage).addOnSuccessListener {
       recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount)
@@ -109,8 +115,26 @@ class DirectMessagesLogActivity : AppCompatActivity() {
     fromRef.setValue(directMessage)
     if (fromId != toId) toRef.setValue(directMessage)
 
+    val data = hashMapOf(
+      text to text,
+      "push" to true
+    )
+
+    functions
+      .getHttpsCallable("sendMessage")
+      .call(data)
+      .continueWith { task ->
+        // This continuation runs on either success or failure, but if the task
+        // has failed then result will throw an Exception which will be
+        // propagated down.
+        val result = task.result?.data as String
+        result
+      }
+
+
     direct_messages_log_edit_text.text.clear()
 
   }
+
 
 }

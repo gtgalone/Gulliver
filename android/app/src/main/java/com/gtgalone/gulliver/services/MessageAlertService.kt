@@ -13,6 +13,7 @@ import com.gtgalone.gulliver.MainActivity
 import com.gtgalone.gulliver.R
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.gtgalone.gulliver.models.Notification
 
 class MessageAlertService : FirebaseMessagingService() {
   override fun onNewToken(p0: String?) {
@@ -24,10 +25,13 @@ class MessageAlertService : FirebaseMessagingService() {
   override fun onMessageReceived(p0: RemoteMessage?) {
     super.onMessageReceived(p0)
 
-    Log.d("test", p0.toString())
+    Log.d("test", p0?.notification?.title)
+    Log.d("test", p0?.notification?.body)
+    Log.d("test", p0?.notification?.icon)
+    sendNotification(p0?.notification!!)
   }
 
-  private fun sendNotification(messageBody: String) {
+  private fun sendNotification(notification: RemoteMessage.Notification) {
     val intent = Intent(this, MainActivity::class.java)
     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
 
@@ -37,8 +41,8 @@ class MessageAlertService : FirebaseMessagingService() {
     val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
     val notificationBuilder = NotificationCompat.Builder(this, channelId)
       .setSmallIcon(R.mipmap.ic_launcher)
-      .setContentTitle(getString(R.string.fcm_message))
-      .setContentText(messageBody)
+      .setContentTitle(notification.title)
+      .setContentText(notification.body)
       .setAutoCancel(true)
       .setSound(defaultSoundUri)
       .setContentIntent(pendingIntent)

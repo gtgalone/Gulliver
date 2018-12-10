@@ -222,7 +222,7 @@ class MainActivity : AppCompatActivity() {
                                           grantResults: IntArray) {
     Log.i(TAG, "onRequestPermissionResult")
     if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
-      if (grantResults.size <= 0) {
+      if (grantResults.isEmpty()) {
         // If user interaction was interrupted, the permission request is cancelled and you
         // receive empty arrays.
         Log.i(TAG, "User interaction was cancelled.")

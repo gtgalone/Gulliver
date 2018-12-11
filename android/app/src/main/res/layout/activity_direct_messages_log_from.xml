@@ -9,8 +9,8 @@
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/direct_message_item_from_image_view"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -26,7 +26,7 @@
         android:layout_marginLeft="8dp"
         android:background="@drawable/rounded_message"
         android:maxWidth="240dp"
-        android:padding="15dp"
+        android:padding="8dp"
         android:textSize="16sp"
         app:layout_constraintStart_toEndOf="@+id/direct_message_item_from_image_view"
         app:layout_constraintTop_toTopOf="parent" />

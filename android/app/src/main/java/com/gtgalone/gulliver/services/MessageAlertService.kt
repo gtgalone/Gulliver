@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
@@ -13,7 +14,7 @@ import com.gtgalone.gulliver.MainActivity
 import com.gtgalone.gulliver.R
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.gtgalone.gulliver.models.Notification
+import com.squareup.picasso.Picasso
 
 class MessageAlertService : FirebaseMessagingService() {
   override fun onNewToken(p0: String?) {
@@ -41,6 +42,7 @@ class MessageAlertService : FirebaseMessagingService() {
     val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
     val notificationBuilder = NotificationCompat.Builder(this, channelId)
       .setSmallIcon(R.mipmap.ic_launcher)
+      .setLargeIcon(Picasso.get().load(notification.icon).transform(CircleTransformService()).get())
       .setContentTitle(notification.title)
       .setContentText(notification.body)
       .setAutoCancel(true)

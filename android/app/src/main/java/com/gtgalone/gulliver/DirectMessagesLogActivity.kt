@@ -1,13 +1,11 @@
 package com.gtgalone.gulliver
 
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.gtgalone.gulliver.models.DirectMessageLog
 import com.gtgalone.gulliver.views.DirectMessagesLogFrom
 import com.gtgalone.gulliver.views.DirectMessagesLogTo
 import com.gtgalone.gulliver.models.User
-import com.gtgalone.gulliver.services.MessageAlertService
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError

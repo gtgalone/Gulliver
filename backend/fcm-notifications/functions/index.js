@@ -24,13 +24,12 @@ exports.sendMessage = functions.https
     // [START_EXCLUDE]
     // [START readMessageData]
     // Message text passed from the client.
-    const { fromId, toId, text } = data
+    const { fromId, toId, body } = data
 
-    console.log('data: ', data)
     // [END readMessageData]
     // [START messageHttpsErrors]
     // Checking attribute.
-    if (!(typeof text === 'string') || text.length === 0) {
+    if (!(typeof body === 'string') || body.length === 0) {
       // Throwing an HttpsError so that the client gets the error details.
       throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
         'one arguments "text" containing the message text to add.')
@@ -71,7 +70,7 @@ exports.sendMessage = functions.https
     const payload = {
       notification: {
         title: toUser.displayName,
-        body: text,
+        body,
         icon: "ic_notification",
         tag: "direct-message",
         sound: "default"
@@ -81,17 +80,11 @@ exports.sendMessage = functions.https
       }
     }
 
-    const options = {
-      android: {
-        priority: "normal"
-      }
-    }
-
     // Listing all tokens as an array.
     tokens = Object.keys(tokensSnapshot.val())
 
     // Send notifications to all tokens.
-    const response = await admin.messaging().sendToDevice(tokens, payload, options)
+    const response = await admin.messaging().sendToDevice(tokens, payload)
     // For each message check if there was an error.
     const tokensToRemove = []
     response.results.forEach((result, index) => {

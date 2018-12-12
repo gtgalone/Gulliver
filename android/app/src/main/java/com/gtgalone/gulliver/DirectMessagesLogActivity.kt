@@ -133,10 +133,5 @@ class DirectMessagesLogActivity : AppCompatActivity() {
         val result = task.result?.data as String
         result
       }
-
-
-
   }
-
-
 }

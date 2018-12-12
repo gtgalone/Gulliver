@@ -113,9 +113,14 @@ class DirectMessagesLogActivity : AppCompatActivity() {
     fromRef.setValue(directMessage)
     if (fromId != toId) toRef.setValue(directMessage)
 
+    direct_messages_log_edit_text.text.clear()
+
+    if (fromId == toId) return
+
     val data = hashMapOf(
-      text to text,
-      "push" to true
+      "fromId" to fromId,
+      "toId" to toId,
+      "text" to text
     )
 
     functions
@@ -130,7 +135,6 @@ class DirectMessagesLogActivity : AppCompatActivity() {
       }
 
 
-    direct_messages_log_edit_text.text.clear()
 
   }
 

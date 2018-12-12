@@ -55,6 +55,12 @@ class MainActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
+    val bundle = intent.extras
+
+    if (bundle != null) {
+      Log.d("test", bundle.toString())
+    }
+
     mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
     fetchCurrentUser()

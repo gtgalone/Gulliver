@@ -94,9 +94,9 @@ class DirectMessagesLogActivity : AppCompatActivity() {
     val fromLogRef = FirebaseDatabase.getInstance().getReference("/direct-messages-log/$fromId/$toId").push()
     val toLogRef = FirebaseDatabase.getInstance().getReference("/direct-messages-log/$toId/$fromId").push()
 
-    val text = direct_messages_log_edit_text.text.toString()
+    val body = direct_messages_log_edit_text.text.toString()
 
-    val directMessage = DirectMessageLog(fromLogRef.key!!, text, fromId, toId, System.currentTimeMillis() / 1000)
+    val directMessage = DirectMessageLog(fromLogRef.key!!, body, fromId, toId, System.currentTimeMillis() / 1000)
 
     fromLogRef.setValue(directMessage).addOnSuccessListener {
       recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount)
@@ -120,7 +120,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
     val data = hashMapOf(
       "fromId" to fromId,
       "toId" to toId,
-      "text" to text
+      "body" to body
     )
 
     functions

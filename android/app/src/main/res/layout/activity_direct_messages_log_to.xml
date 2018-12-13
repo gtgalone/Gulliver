@@ -35,8 +35,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/direct_messages_log_to_date_text_view"
-            app:layout_constraintTop_toBottomOf="@+id/direct_messages_log_to_text_view"
-            app:layout_constraintEnd_toEndOf="@+id/direct_messages_log_to_text_view"
             android:alpha="0.8"
-            android:textSize="12sp"/>
+            android:textSize="12sp"
+            app:layout_constraintTop_toBottomOf="@+id/direct_messages_log_to_text_view"
+            app:layout_constraintEnd_toEndOf="@+id/direct_messages_log_to_text_view" />
 </androidx.constraintlayout.widget.ConstraintLayout>

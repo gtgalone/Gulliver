@@ -69,14 +69,20 @@ exports.sendMessage = functions.https
     // Notification details.
     const payload = {
       notification: {
+        clickAction: 'DIRECT_MESSAGES_LOG_ACTIVITY',
         title: toUser.displayName,
         body,
-        icon: "ic_notification",
-        tag: "direct-message",
-        sound: "default"
+        icon: 'ic_notification',
+        tag: 'direct-message',
+        sound: 'default'
       },
       data: {
-        photoURL: toUser.photoURL
+        toUser: JSON.stringify({
+          uid: toUser.uid,
+          email: toUser.email,
+          displayName: toUser.displayName,
+          photoUrl: toUser.photoURL
+        })
       }
     }
 

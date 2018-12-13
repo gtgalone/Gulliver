@@ -2,6 +2,7 @@ package com.gtgalone.gulliver
 
 import android.os.Bundle
 import android.util.Log
+import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
 import com.gtgalone.gulliver.models.DirectMessageLog
 import com.gtgalone.gulliver.views.DirectMessagesLogFrom
@@ -49,7 +50,6 @@ class DirectMessagesLogActivity : AppCompatActivity() {
     direct_messages_log_send_button.setOnClickListener {
       sendMessage(toUser)
     }
-
   }
 
   private fun listenForMessages(toUser: User) {
@@ -60,20 +60,23 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
         val directMessage = p0.getValue(DirectMessageLog::class.java)
         if (directMessage != null) {
+          Log.d("test", directMessage.timeStamp.toString())
           when (directMessage.toId) {
             directMessage.fromId -> adapter.add(
               DirectMessagesLogTo(
                 directMessage.text,
-                currentUser
+                currentUser,
+                directMessage.timeStamp
               )
             )
             currentUser.uid -> adapter.add(
               DirectMessagesLogFrom(
                 directMessage.text,
-                toUser
+                toUser,
+                directMessage.timeStamp
               )
             )
-            else -> adapter.add(DirectMessagesLogTo(directMessage.text, currentUser))
+            else -> adapter.add(DirectMessagesLogTo(directMessage.text, currentUser, directMessage.timeStamp))
           }
 
           recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount)

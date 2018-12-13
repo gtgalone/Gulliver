@@ -50,9 +50,9 @@
                 android:layout_height="wrap_content"
                 android:textSize="15sp"/>
         <TextView
-                android:text="안녕하세요?"
+                android:id="@+id/country_code"
                 android:layout_width="match_parent"
-                android:layout_height="54dp" android:id="@+id/textView"
+                android:layout_height="54dp"
                 android:background="@drawable/rounded_message" android:gravity="center"/>
     </LinearLayout>
 

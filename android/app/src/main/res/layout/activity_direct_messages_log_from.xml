@@ -2,13 +2,14 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
     android:layout_marginBottom="8dp">
 
     <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/direct_message_item_from_image_view"
+        android:id="@+id/direct_messages_log_from_image_view"
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_marginStart="8dp"
@@ -19,7 +20,7 @@
         app:layout_constraintVertical_bias="0.0" />
 
     <TextView
-        android:id="@+id/direct_message_item_from_text_view"
+        android:id="@+id/direct_messages_log_from_text_view"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -28,6 +29,14 @@
         android:maxWidth="240dp"
         android:padding="8dp"
         android:textSize="16sp"
-        app:layout_constraintStart_toEndOf="@+id/direct_message_item_from_image_view"
+        app:layout_constraintStart_toEndOf="@+id/direct_messages_log_from_image_view"
         app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="8dp"
+        android:id="@+id/direct_messages_log_from_date_text_view"
+        app:layout_constraintTop_toBottomOf="@+id/direct_messages_log_from_text_view"
+        app:layout_constraintStart_toStartOf="@+id/direct_messages_log_from_text_view"
+        android:alpha="0.8"
+        android:textSize="12sp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

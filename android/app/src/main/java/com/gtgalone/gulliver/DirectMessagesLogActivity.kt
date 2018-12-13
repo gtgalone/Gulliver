@@ -1,6 +1,7 @@
 package com.gtgalone.gulliver
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.gtgalone.gulliver.models.DirectMessageLog
 import com.gtgalone.gulliver.views.DirectMessagesLogFrom
@@ -11,6 +12,8 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_direct_messages_log.*
@@ -26,16 +29,22 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_direct_messages_log)
+
+    val toUser: User
+    if (intent.getParcelableExtra<User>(PeopleActivity.USER_KEY) != null) {
+      toUser = intent.getParcelableExtra(PeopleActivity.USER_KEY)
+    } else {
+      val bundle = intent.extras
+      toUser = Gson().fromJson(bundle?.getString("toUser"), User::class.java)
+    }
+
     recycler_view_direct_messages_log.adapter = adapter
 
     functions = FirebaseFunctions.getInstance()
 
-    val toUser = intent.getParcelableExtra<User>(PeopleActivity.USER_KEY)
-
     supportActionBar!!.title = toUser.displayName
 
     listenForMessages(toUser)
-
 
     direct_messages_log_send_button.setOnClickListener {
       sendMessage(toUser)

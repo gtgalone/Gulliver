@@ -1,5 +1,6 @@
 package com.gtgalone.gulliver.views
 
+import android.util.Log
 import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.models.User
 import com.squareup.picasso.Picasso

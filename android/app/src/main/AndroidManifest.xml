@@ -30,12 +30,11 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
-                <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <!-- Accepts URIs that begin with "http://www.example.com/gizmos” -->
                 <data
-                        android:host="gulliver.ga"
-                        android:scheme="http" />
+                    android:host="gulliver.ga"
+                    android:scheme="http" />
                 <!-- note that the leading "/" is required for pathPrefix -->
             </intent-filter>
             <intent-filter>
@@ -57,6 +56,10 @@
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value=".DirectMessagesActivity" />
+            <intent-filter>
+                <action android:name="DIRECT_MESSAGES_LOG_ACTIVITY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
         <activity android:name=".PeopleActivity">
             <meta-data

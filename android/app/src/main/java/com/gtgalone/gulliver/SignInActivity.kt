@@ -73,10 +73,6 @@ class SignInActivity : AppCompatActivity() {
         if (it.isSuccessful) {
           Log.d(TAG, "signInWithCredential:success")
           val user = mAuth.currentUser!!
-          Log.d(TAG, user.displayName)
-          Log.d(TAG, user.email)
-          Log.d(TAG, user.photoUrl.toString())
-          Log.d(TAG, user.providerId)
 
           saveUserToFirebaseDatabase(user.displayName!!, user.email!!, user.photoUrl.toString())
 

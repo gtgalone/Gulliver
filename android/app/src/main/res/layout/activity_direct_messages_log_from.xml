@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginLeft="8dp"
-            android:background="@drawable/rounded_message"
+            android:background="@drawable/rounded_message_from"
             android:maxWidth="240dp"
             android:padding="8dp"
             android:textSize="16sp"

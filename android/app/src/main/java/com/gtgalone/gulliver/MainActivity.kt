@@ -7,6 +7,8 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.gtgalone.gulliver.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -14,11 +16,12 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.gtgalone.gulliver.models.Location
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity() {
+
+  private lateinit var mDrawerLayout: DrawerLayout
 
   companion object {
     const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
@@ -29,8 +32,11 @@ class MainActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
+    fetchCurrentUser()
 
-    val location = intent.getParcelableExtra<Location>(SplashActivity.CURRENT_LOCATION)
+//    mDrawerLayout = findViewById(R.id.drawer_people)
+
+    val location = intent.getParcelableExtra<Location>(SplashActivity.CURRENT_LOCATION) ?: return
 
     Log.d("test", location.countryCode)
     Log.d("test", location.adminArea)
@@ -43,11 +49,7 @@ class MainActivity : AppCompatActivity() {
       channelArea = getString(R.string.channel_area1, location.locality, location.adminArea, location.countryCode)
     }
 
-    location_text!!.text = channelArea
     supportActionBar?.title = channelArea
-
-
-    fetchCurrentUser()
   }
 
   override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -81,18 +83,22 @@ class MainActivity : AppCompatActivity() {
   }
 
   override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-    when (item?.itemId) {
+    return when (item?.itemId) {
       R.id.menu_people -> {
+//        mDrawerLayout.openDrawer(GravityCompat.START)
         changeActivity(PeopleActivity::class.java, false)
+        true
       }
       R.id.menu_direct_message -> {
         changeActivity(DirectMessagesActivity::class.java, false)
+        true
       }
       R.id.menu_sign_out -> {
         FirebaseAuth.getInstance().signOut()
         changeActivity(SignInActivity::class.java)
+        true
       }
+      else -> super.onOptionsItemSelected(item)
     }
-    return super.onOptionsItemSelected(item)
   }
 }

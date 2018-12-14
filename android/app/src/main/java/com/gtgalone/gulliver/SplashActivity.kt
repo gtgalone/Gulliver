@@ -32,12 +32,13 @@ class SplashActivity : AppCompatActivity() {
    */
   private var mFusedLocationClient: FusedLocationProviderClient? = null
 
-
   public override fun onStart() {
     super.onStart()
     if (!checkPermissions()) {
+      Log.d("test", "no")
       requestPermissions()
     } else {
+      Log.d("test", "yes")
       getLastLocation()
     }
   }
@@ -66,6 +67,17 @@ class SplashActivity : AppCompatActivity() {
   private fun getLastLocation() {
     mFusedLocationClient!!.lastLocation
       .addOnCompleteListener(this) { task ->
+        val uid = FirebaseAuth.getInstance().uid
+
+        val intent: Intent
+
+        if (uid == null) {
+          intent = Intent(this@SplashActivity, SignInActivity::class.java)
+        } else {
+          intent = Intent(this@SplashActivity, MainActivity::class.java)
+        }
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+
         if (task.isSuccessful && task.result != null) {
 
           doAsync {
@@ -82,26 +94,15 @@ class SplashActivity : AppCompatActivity() {
             val adminArea = firstLocation.adminArea
             val locality = firstLocation.locality
 
-            val uid = FirebaseAuth.getInstance().uid
-
 //            FirebaseDatabase.getInstance().getReference("servers/${}")
 
-            val intent: Intent
-
-            if (uid == null) {
-              intent = Intent(this@SplashActivity, SignInActivity::class.java)
-            } else {
-              intent = Intent(this@SplashActivity, MainActivity::class.java)
-            }
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.putExtra(CURRENT_LOCATION, Location(countryCode, adminArea, locality))
-
-            startActivity(intent)
           }
 
         } else {
           showMessage(getString(R.string.no_location_detected))
         }
+        startActivity(intent)
       }
   }
 
@@ -110,7 +111,8 @@ class SplashActivity : AppCompatActivity() {
    * @param text The Snackbar text.
    */
   private fun showMessage(text: String) {
-    val container = findViewById<View>(R.id.main_activity_container)
+    Log.d("test", "show mes")
+    val container = findViewById<View>(R.id.main_activity_layout)
     if (container != null) {
       Toast.makeText(this@SplashActivity, text, Toast.LENGTH_LONG).show()
     }

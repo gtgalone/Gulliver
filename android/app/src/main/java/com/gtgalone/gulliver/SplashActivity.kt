@@ -112,7 +112,7 @@ class SplashActivity : AppCompatActivity() {
    */
   private fun showMessage(text: String) {
     Log.d("test", "show mes")
-    val container = findViewById<View>(R.id.main_activity_layout)
+    val container = findViewById<View>(R.id.activity_main_layout)
     if (container != null) {
       Toast.makeText(this@SplashActivity, text, Toast.LENGTH_LONG).show()
     }

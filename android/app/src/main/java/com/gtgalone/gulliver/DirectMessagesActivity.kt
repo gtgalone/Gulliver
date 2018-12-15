@@ -2,11 +2,9 @@ package com.gtgalone.gulliver
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.gtgalone.gulliver.models.DirectMessageLog
-import com.gtgalone.gulliver.models.User
 import com.gtgalone.gulliver.views.DirectMessagesRow
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ChildEventListener
@@ -15,7 +13,9 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
-import kotlinx.android.synthetic.main.activity_direct_messages.*
+import kotlinx.android.synthetic.main.app_bar_direct_messages.*
+import kotlinx.android.synthetic.main.app_bar_main.*
+import kotlinx.android.synthetic.main.content_direct_messages.*
 
 class DirectMessagesActivity : AppCompatActivity() {
   private val adapter = GroupAdapter<ViewHolder>()
@@ -24,7 +24,10 @@ class DirectMessagesActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_direct_messages)
 
-    supportActionBar!!.title = "Direct Message"
+    setSupportActionBar(toolbar)
+
+    toolbar_direct_messages.title = "Direct Messages"
+//    toolbar_direct_messages.setDisplayHomeAsUpEnabled(true)
 
     recycler_view_direct_messages.adapter = adapter
     recycler_view_direct_messages.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
@@ -32,7 +35,7 @@ class DirectMessagesActivity : AppCompatActivity() {
     adapter.setOnItemClickListener { item, view ->
       val intent = Intent(view.context, DirectMessagesLogActivity::class.java)
       val directMessagesRow = item as DirectMessagesRow
-      intent.putExtra(PeopleActivity.USER_KEY, directMessagesRow.person)
+      intent.putExtra(MainActivity.USER_KEY, directMessagesRow.person)
       startActivity(intent)
     }
 

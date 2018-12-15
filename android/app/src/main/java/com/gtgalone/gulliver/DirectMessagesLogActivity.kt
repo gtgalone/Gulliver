@@ -2,7 +2,6 @@ package com.gtgalone.gulliver
 
 import android.os.Bundle
 import android.util.Log
-import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
 import com.gtgalone.gulliver.models.DirectMessageLog
 import com.gtgalone.gulliver.views.DirectMessagesLogFrom
@@ -14,10 +13,11 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
-import kotlinx.android.synthetic.main.activity_direct_messages_log.*
+import kotlinx.android.synthetic.main.app_bar_direct_messages_log.*
+import kotlinx.android.synthetic.main.app_bar_main.*
+import kotlinx.android.synthetic.main.content_direct_messages_log.*
 
 class DirectMessagesLogActivity : AppCompatActivity() {
 
@@ -30,10 +30,11 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_direct_messages_log)
+    setSupportActionBar(toolbar)
 
     val toUser: User
-    if (intent.getParcelableExtra<User>(PeopleActivity.USER_KEY) != null) {
-      toUser = intent.getParcelableExtra(PeopleActivity.USER_KEY)
+    if (intent.getParcelableExtra<User>(MainActivity.USER_KEY) != null) {
+      toUser = intent.getParcelableExtra(MainActivity.USER_KEY)
     } else {
       val bundle = intent.extras
       toUser = Gson().fromJson(bundle?.getString("toUser"), User::class.java)
@@ -43,7 +44,8 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
     functions = FirebaseFunctions.getInstance()
 
-    supportActionBar!!.title = toUser.displayName
+    toolbar_direct_messages_log.title = toUser.displayName
+//    toolbar_direct_messages_log.setDisplayHomeAsUpEnabled(true)
 
     listenForMessages(toUser)
 

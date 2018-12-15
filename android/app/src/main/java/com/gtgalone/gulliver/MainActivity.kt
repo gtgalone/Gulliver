@@ -6,9 +6,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import com.gtgalone.gulliver.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -16,25 +15,37 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.gtgalone.gulliver.models.Location
-import kotlin.system.exitProcess
-
+import com.gtgalone.gulliver.views.PeopleRow
+import com.xwray.groupie.GroupAdapter
+import com.xwray.groupie.ViewHolder
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.app_bar_main.*
 
 class MainActivity : AppCompatActivity() {
-
-  private lateinit var mDrawerLayout: DrawerLayout
-
   companion object {
     const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
+    const val USER_KEY = "USER_KEY"
     var currentUser: User? = null
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
+    setSupportActionBar(toolbar)
+
+    val toggle = ActionBarDrawerToggle(
+      this,
+      activity_main_layout,
+      toolbar,
+      R.string.navigation_drawer_open,
+      R.string.navigation_drawer_close
+    )
+
+    activity_main_layout.addDrawerListener(toggle)
+    toggle.syncState()
 
     fetchCurrentUser()
-
-//    mDrawerLayout = findViewById(R.id.drawer_people)
+    fetchUsers()
 
     val location = intent.getParcelableExtra<Location>(SplashActivity.CURRENT_LOCATION) ?: return
 
@@ -52,9 +63,14 @@ class MainActivity : AppCompatActivity() {
     supportActionBar?.title = channelArea
   }
 
-  override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-    menuInflater.inflate(R.menu.nav_menu, menu)
-    return super.onCreateOptionsMenu(menu)
+  override fun onBackPressed() {
+    if (activity_main_layout.isDrawerOpen(GravityCompat.START)) {
+      activity_main_layout.closeDrawer(GravityCompat.START)
+    } else if (activity_main_layout.isDrawerOpen(GravityCompat.END)) {
+      activity_main_layout.closeDrawer(GravityCompat.END)
+    } else {
+      super.onBackPressed()
+    }
   }
 
   private fun fetchCurrentUser() {
@@ -77,16 +93,18 @@ class MainActivity : AppCompatActivity() {
     startActivity(intent)
   }
 
-  fun close(v: View) {
-    moveTaskToBack(true)
-    exitProcess(-1)
+  override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    menuInflater.inflate(R.menu.nav_menu, menu)
+    return super.onCreateOptionsMenu(menu)
   }
 
   override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+    Log.d("test", item?.itemId.toString() + R.id.menu_people)
+
     return when (item?.itemId) {
       R.id.menu_people -> {
-//        mDrawerLayout.openDrawer(GravityCompat.START)
-        changeActivity(PeopleActivity::class.java, false)
+        activity_main_layout.openDrawer(GravityCompat.END)
+//        changeActivity(PeopleActivity::class.java, false)
         true
       }
       R.id.menu_direct_message -> {
@@ -100,5 +118,33 @@ class MainActivity : AppCompatActivity() {
       }
       else -> super.onOptionsItemSelected(item)
     }
+  }
+
+  private fun fetchUsers() {
+    val ref = FirebaseDatabase.getInstance().getReference("/users")
+
+    ref.addListenerForSingleValueEvent(object : ValueEventListener {
+      override fun onDataChange(p0: DataSnapshot) {
+        val adapter = GroupAdapter<ViewHolder>()
+        p0.children.forEach {
+          val user = it.getValue(User::class.java)
+
+          if (user != null) adapter.add(PeopleRow(user))
+          adapter.setOnItemClickListener { item, view ->
+
+            val userItem = item as PeopleRow
+
+            val intent = Intent(view.context, DirectMessagesLogActivity::class.java)
+            intent.putExtra(USER_KEY, userItem.user)
+            startActivity(intent)
+          }
+        }
+        recycler_view_people.adapter = adapter
+      }
+
+      override fun onCancelled(p0: DatabaseError) {
+      }
+    })
+
   }
 }

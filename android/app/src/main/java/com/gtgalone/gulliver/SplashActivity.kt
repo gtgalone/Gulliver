@@ -2,20 +2,27 @@ package com.gtgalone.gulliver
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Geocoder
+import android.location.LocationManager
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.provider.SyncStateContract
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.common.internal.Constants
+import com.google.android.gms.location.*
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.gtgalone.gulliver.models.Location
@@ -36,12 +43,65 @@ class SplashActivity : AppCompatActivity() {
 
   public override fun onStart() {
     super.onStart()
+    val locationRequest = LocationRequest.create()?.apply {
+      interval = 10000
+      fastestInterval = 5000
+      priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+    }
+
     if (!checkPermissions()) {
       Log.d(TAG, "yes")
       requestPermissions()
     } else {
       Log.d(TAG, "no")
       getLastLocation()
+    }
+    return
+    val builder = LocationSettingsRequest.Builder()
+      .addLocationRequest(locationRequest!!)
+    val client: SettingsClient = LocationServices.getSettingsClient(this)
+    val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
+
+    task.addOnSuccessListener {
+      Log.d(TAG, it.locationSettingsStates.isLocationUsable.toString())
+      Log.d(TAG, "gps on")
+      if (!checkPermissions()) {
+        Log.d(TAG, "yes")
+        requestPermissions()
+      } else {
+        Log.d(TAG, "no")
+        getLastLocation()
+      }
+    }
+
+    task.addOnFailureListener {
+      Log.d(TAG, "gps off")
+      if (it is ResolvableApiException) {
+        try {
+          it.startResolutionForResult(this@SplashActivity, 1)
+          if (!checkPermissions()) {
+            Log.d(TAG, "yes")
+            requestPermissions()
+          } else {
+            Log.d(TAG, "no")
+            getLastLocation()
+          }
+        } catch (sendEx: IntentSender.SendIntentException) {
+
+        }
+      }
+    }
+    val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+      if (!checkPermissions()) {
+        Log.d(TAG, "yes")
+        requestPermissions()
+      } else {
+        Log.d(TAG, "no")
+        getLastLocation()
+      }
+    } else {
+
     }
   }
 
@@ -52,6 +112,7 @@ class SplashActivity : AppCompatActivity() {
     databaseReference = FirebaseDatabase.getInstance().getReference("/servers")
 
     try {
+      Log.d(TAG, "on create fuse")
       mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this@SplashActivity)
     } catch (e: InterruptedException) {
       e.printStackTrace()
@@ -71,7 +132,6 @@ class SplashActivity : AppCompatActivity() {
   private fun getLastLocation() {
     mFusedLocationClient!!.lastLocation
       .addOnCompleteListener(this) { task ->
-        Log.d(TAG, task.result.toString())
         val uid = FirebaseAuth.getInstance().uid
 
         val intent: Intent
@@ -172,8 +232,8 @@ class SplashActivity : AppCompatActivity() {
    * Return the current state of the permissions needed.
    */
   private fun checkPermissions(): Boolean {
-
-    val permissionState = ContextCompat.checkSelfPermission(this,
+    Log.d(TAG, "check per")
+    val permissionState = ContextCompat.checkSelfPermission(this@SplashActivity,
       Manifest.permission.ACCESS_COARSE_LOCATION)
     return permissionState == PackageManager.PERMISSION_GRANTED
   }

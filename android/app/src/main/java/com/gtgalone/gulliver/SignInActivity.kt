@@ -15,6 +15,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.iid.FirebaseInstanceId
+import com.gtgalone.gulliver.models.Location
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
 class SignInActivity : AppCompatActivity() {
@@ -27,7 +28,7 @@ class SignInActivity : AppCompatActivity() {
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
-
+    Log.d("test", "on create sign")
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_sign_in)
 
@@ -75,9 +76,15 @@ class SignInActivity : AppCompatActivity() {
           val user = mAuth.currentUser!!
 
           saveUserToFirebaseDatabase(user.displayName!!, user.email!!, user.photoUrl.toString())
-
+          val location = intent.getParcelableExtra<Location>(SplashActivity.CURRENT_LOCATION)
           val intent = Intent(this, MainActivity::class.java)
           intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+          intent.putExtra(
+            SplashActivity.CURRENT_LOCATION,
+            location
+          )
+
           startActivity(intent)
         } else {
           Log.d(TAG, "signInWithCredential:failure", it.exception)

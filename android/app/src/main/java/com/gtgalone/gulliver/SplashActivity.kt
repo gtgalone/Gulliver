@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.view.Menu
 import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -18,27 +17,30 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 import com.gtgalone.gulliver.models.Location
+import com.gtgalone.gulliver.models.Server
 import org.jetbrains.anko.doAsync
 
 class SplashActivity : AppCompatActivity() {
   companion object {
     const val TAG = "SplashActivity"
     const val CURRENT_LOCATION = "CurrentLocation"
+    const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
   }
     /**
    * Provides the entry point to the Fused Location Provider API.
    */
   private var mFusedLocationClient: FusedLocationProviderClient? = null
+  private lateinit var databaseReference: DatabaseReference
 
   public override fun onStart() {
     super.onStart()
     if (!checkPermissions()) {
-      Log.d("test", "no")
+      Log.d(TAG, "yes")
       requestPermissions()
     } else {
-      Log.d("test", "yes")
+      Log.d(TAG, "no")
       getLastLocation()
     }
   }
@@ -47,8 +49,10 @@ class SplashActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_splash)
 
+    databaseReference = FirebaseDatabase.getInstance().getReference("/servers")
+
     try {
-      mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+      mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this@SplashActivity)
     } catch (e: InterruptedException) {
       e.printStackTrace()
     }
@@ -67,6 +71,7 @@ class SplashActivity : AppCompatActivity() {
   private fun getLastLocation() {
     mFusedLocationClient!!.lastLocation
       .addOnCompleteListener(this) { task ->
+        Log.d(TAG, task.result.toString())
         val uid = FirebaseAuth.getInstance().uid
 
         val intent: Intent
@@ -76,34 +81,69 @@ class SplashActivity : AppCompatActivity() {
         } else {
           intent = Intent(this@SplashActivity, MainActivity::class.java)
         }
-        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         if (task.isSuccessful && task.result != null) {
 
           doAsync {
-
             val geo = Geocoder(this@SplashActivity)
             val mLastLocation = task.result!!
 
             val latitude = mLastLocation.latitude
             val longitude = mLastLocation.longitude
 
-            val firstLocation = geo.getFromLocation(latitude, longitude, 10)[0]
+            val location = geo.getFromLocation(latitude, longitude, 10)[0]
 
-            val countryCode = firstLocation.countryCode
-            val adminArea = firstLocation.adminArea
-            val locality = firstLocation.locality
-
-//            FirebaseDatabase.getInstance().getReference("servers/${}")
+            val countryCode = location.countryCode
+            val adminArea = location.adminArea
+            val locality = location.locality
 
             intent.putExtra(CURRENT_LOCATION, Location(countryCode, adminArea, locality))
+
+            val name: String
+            if (location.adminArea == location.locality) {
+              name = getString(R.string.channel_area2, location.locality, location.countryCode)
+            } else {
+              name = getString(R.string.channel_area1, location.locality, location.adminArea, location.countryCode)
+            }
+
+            getServer(Server(databaseReference.push().key!!, name, countryCode, adminArea, locality))
+
+            startActivity(intent)
+            finish()
           }
 
         } else {
           showMessage(getString(R.string.no_location_detected))
+
+//          startActivity(intent)
+          finish()
         }
-        startActivity(intent)
       }
+  }
+
+  private fun getServer(server: Server) {
+    databaseReference.orderByChild("name").equalTo(server.name)
+      .addListenerForSingleValueEvent(object: ValueEventListener {
+        override fun onDataChange(p0: DataSnapshot) {
+          Log.d(TAG, p0.childrenCount.toString())
+          Log.d(TAG, p0.hasChildren().toString())
+
+          if (!p0.hasChildren()) {
+            databaseReference.setValue(Server(server.id, server.name, server.countryCode, server.adminArea, server.locality))
+              .addOnCompleteListener {
+
+              }
+          } else {
+            p0.children.forEach {
+              val aa = it.getValue(Server::class.java)
+              Log.d(TAG, aa!!.name)
+            }
+          }
+        }
+
+        override fun onCancelled(p0: DatabaseError) {
+        }
+      })
   }
 
   /**
@@ -111,11 +151,8 @@ class SplashActivity : AppCompatActivity() {
    * @param text The Snackbar text.
    */
   private fun showMessage(text: String) {
-    Log.d("test", "show mes")
-    val container = findViewById<View>(R.id.activity_main_layout)
-    if (container != null) {
-      Toast.makeText(this@SplashActivity, text, Toast.LENGTH_LONG).show()
-    }
+    Log.d(TAG, "show mes")
+    Toast.makeText(this@SplashActivity, text, Toast.LENGTH_LONG).show()
   }
 
   /**
@@ -142,14 +179,15 @@ class SplashActivity : AppCompatActivity() {
   }
 
   private fun startLocationPermissionRequest() {
+    Log.d(TAG, "start req per")
     ActivityCompat.requestPermissions(this@SplashActivity,
       arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
-      MainActivity.REQUEST_PERMISSIONS_REQUEST_CODE
+      REQUEST_PERMISSIONS_REQUEST_CODE
     )
   }
 
   private fun requestPermissions() {
-    val shouldProvideRationale = ActivityCompat.shouldShowRequestPermissionRationale(this,
+    val shouldProvideRationale = ActivityCompat.shouldShowRequestPermissionRationale(this@SplashActivity,
       Manifest.permission.ACCESS_COARSE_LOCATION)
     // Provide an additional rationale to the user. This would happen if the user denied the
     // request previously, but didn't check the "Don't ask again" checkbox.
@@ -175,7 +213,7 @@ class SplashActivity : AppCompatActivity() {
   override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
                                           grantResults: IntArray) {
     Log.i(TAG, "onRequestPermissionResult")
-    if (requestCode == MainActivity.REQUEST_PERMISSIONS_REQUEST_CODE) {
+    if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
       if (grantResults.isEmpty()) {
         // If user interaction was interrupted, the permission request is cancelled and you
         // receive empty arrays.

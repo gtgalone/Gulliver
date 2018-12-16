@@ -62,7 +62,6 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
         val directMessage = p0.getValue(DirectMessageLog::class.java)
         if (directMessage != null) {
-          Log.d("test", directMessage.timeStamp.toString())
           when (directMessage.toId) {
             directMessage.fromId -> adapter.add(
               DirectMessagesLogTo(

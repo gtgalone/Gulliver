@@ -2,12 +2,11 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Background color -->
-    <item android:drawable="@color/colorPrimary" />
+    <item android:drawable="@color/colorPrimary"/>
 
     <!-- Logo -->
     <item
         android:top="550px"
         android:bottom="550px"
-        android:drawable="@drawable/splash">
-    </item>
+        android:drawable="@drawable/splash"/>
 </layer-list>

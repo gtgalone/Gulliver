@@ -23,7 +23,6 @@ import kotlinx.android.synthetic.main.app_bar_main.*
 
 class MainActivity : AppCompatActivity() {
   companion object {
-    const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
     const val USER_KEY = "USER_KEY"
     var currentUser: User? = null
   }
@@ -60,7 +59,7 @@ class MainActivity : AppCompatActivity() {
       channelArea = getString(R.string.channel_area1, location.locality, location.adminArea, location.countryCode)
     }
 
-    supportActionBar?.title = channelArea
+    supportActionBar!!.title = channelArea
   }
 
   override fun onBackPressed() {

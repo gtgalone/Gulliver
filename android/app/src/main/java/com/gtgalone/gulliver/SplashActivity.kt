@@ -7,20 +7,18 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Geocoder
+import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.provider.SyncStateContract
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.common.internal.Constants
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
@@ -40,6 +38,8 @@ class SplashActivity : AppCompatActivity() {
    */
   private var mFusedLocationClient: FusedLocationProviderClient? = null
   private lateinit var databaseReference: DatabaseReference
+  private lateinit var locationManager: LocationManager
+
 
   public override fun onStart() {
     super.onStart()
@@ -49,21 +49,12 @@ class SplashActivity : AppCompatActivity() {
       priority = LocationRequest.PRIORITY_HIGH_ACCURACY
     }
 
-    if (!checkPermissions()) {
-      Log.d(TAG, "yes")
-      requestPermissions()
-    } else {
-      Log.d(TAG, "no")
-      getLastLocation()
-    }
-    return
     val builder = LocationSettingsRequest.Builder()
       .addLocationRequest(locationRequest!!)
     val client: SettingsClient = LocationServices.getSettingsClient(this)
     val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
 
     task.addOnSuccessListener {
-      Log.d(TAG, it.locationSettingsStates.isLocationUsable.toString())
       Log.d(TAG, "gps on")
       if (!checkPermissions()) {
         Log.d(TAG, "yes")
@@ -79,20 +70,19 @@ class SplashActivity : AppCompatActivity() {
       if (it is ResolvableApiException) {
         try {
           it.startResolutionForResult(this@SplashActivity, 1)
-          if (!checkPermissions()) {
-            Log.d(TAG, "yes")
-            requestPermissions()
-          } else {
-            Log.d(TAG, "no")
-            getLastLocation()
-          }
         } catch (sendEx: IntentSender.SendIntentException) {
 
         }
       }
     }
-    val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+  }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    Log.d(TAG, "after check")
+    Log.d(TAG, requestCode.toString() + resultCode.toString() + data.toString())
+    if (resultCode == RESULT_OK) {
+      Log.d(TAG, "you hit ok")
       if (!checkPermissions()) {
         Log.d(TAG, "yes")
         requestPermissions()
@@ -101,7 +91,8 @@ class SplashActivity : AppCompatActivity() {
         getLastLocation()
       }
     } else {
-
+      Log.d(TAG, "you hit no thanks")
+      finish()
     }
   }
 
@@ -110,6 +101,7 @@ class SplashActivity : AppCompatActivity() {
     setContentView(R.layout.activity_splash)
 
     databaseReference = FirebaseDatabase.getInstance().getReference("/servers")
+    locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     try {
       Log.d(TAG, "on create fuse")
@@ -119,6 +111,32 @@ class SplashActivity : AppCompatActivity() {
     }
   }
 
+
+  private val locationListener: android.location.LocationListener = object : LocationListener {
+    override fun onLocationChanged(location: android.location.Location?) {
+      Log.d(TAG, "loc cha")
+      if (location != null) {
+        Log.d(TAG, location.latitude.toString() + "," + location.longitude.toString())
+        changeActivityWithLocation(location)
+        locationManager.removeUpdates(this)
+      }
+    }
+
+    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+      Log.d(TAG, "status")
+
+    }
+
+    override fun onProviderDisabled(provider: String?) {
+      Log.d(TAG, "pro dis")
+
+    }
+
+    override fun onProviderEnabled(provider: String?) {
+      Log.d(TAG, "pro ena")
+
+    }
+  }
   /**
    * Provides a simple way of getting a device's location and is well suited for
    * applications that do not require a fine-grained location and that do not need location
@@ -130,55 +148,53 @@ class SplashActivity : AppCompatActivity() {
    */
   @SuppressLint("MissingPermission")
   private fun getLastLocation() {
-    mFusedLocationClient!!.lastLocation
-      .addOnCompleteListener(this) { task ->
-        val uid = FirebaseAuth.getInstance().uid
 
-        val intent: Intent
+    val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+    if (location == null) {
+      Log.d(TAG, "location null")
+      locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000L, 0F, locationListener)
+    } else {
+      Log.d(TAG, location.latitude.toString() + "," + location.longitude.toString())
+      changeActivityWithLocation(location)
+    }
+  }
 
-        if (uid == null) {
-          intent = Intent(this@SplashActivity, SignInActivity::class.java)
-        } else {
-          intent = Intent(this@SplashActivity, MainActivity::class.java)
-        }
+  private fun changeActivityWithLocation(location: android.location.Location) {
+    val uid = FirebaseAuth.getInstance().uid
 
-        if (task.isSuccessful && task.result != null) {
+    val intent: Intent
 
-          doAsync {
-            val geo = Geocoder(this@SplashActivity)
-            val mLastLocation = task.result!!
+    if (uid == null) {
+      intent = Intent(this@SplashActivity, SignInActivity::class.java)
+    } else {
+      intent = Intent(this@SplashActivity, MainActivity::class.java)
+    }
+    doAsync {
+      val geo = Geocoder(this@SplashActivity)
 
-            val latitude = mLastLocation.latitude
-            val longitude = mLastLocation.longitude
+      val latitude = location.latitude
+      val longitude = location.longitude
 
-            val location = geo.getFromLocation(latitude, longitude, 10)[0]
+      val locationInformation = geo.getFromLocation(latitude, longitude, 10)[0]
 
-            val countryCode = location.countryCode
-            val adminArea = location.adminArea
-            val locality = location.locality
+      val countryCode = locationInformation.countryCode
+      val adminArea = locationInformation.adminArea
+      val locality = locationInformation.locality
 
-            intent.putExtra(CURRENT_LOCATION, Location(countryCode, adminArea, locality))
+      intent.putExtra(CURRENT_LOCATION, Location(countryCode, adminArea, locality))
 
-            val name: String
-            if (location.adminArea == location.locality) {
-              name = getString(R.string.channel_area2, location.locality, location.countryCode)
-            } else {
-              name = getString(R.string.channel_area1, location.locality, location.adminArea, location.countryCode)
-            }
-
-            getServer(Server(databaseReference.push().key!!, name, countryCode, adminArea, locality))
-
-            startActivity(intent)
-            finish()
-          }
-
-        } else {
-          showMessage(getString(R.string.no_location_detected))
-
-//          startActivity(intent)
-          finish()
-        }
+      val name: String
+      if (locationInformation.adminArea == locationInformation.locality) {
+        name = getString(R.string.channel_area2, locationInformation.locality, locationInformation.countryCode)
+      } else {
+        name = getString(R.string.channel_area1, locationInformation.locality, locationInformation.adminArea, locationInformation.countryCode)
       }
+
+      getServer(Server(databaseReference.push().key!!, name, countryCode, adminArea, locality))
+      intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+      startActivity(intent)
+      finish()
+    }
   }
 
   private fun getServer(server: Server) {

@@ -79,7 +79,6 @@ class SplashActivity : AppCompatActivity() {
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
-    Log.d(TAG, "after check")
     Log.d(TAG, requestCode.toString() + resultCode.toString() + data.toString())
     if (resultCode == RESULT_OK) {
       Log.d(TAG, "you hit ok")

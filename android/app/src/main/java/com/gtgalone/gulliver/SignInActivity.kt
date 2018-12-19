@@ -77,6 +77,7 @@ class SignInActivity : AppCompatActivity() {
 
           saveUserToFirebaseDatabase(user.displayName!!, user.email!!, user.photoUrl.toString())
           val location = intent.getParcelableExtra<Location>(SplashActivity.CURRENT_LOCATION)
+
           val intent = Intent(this, MainActivity::class.java)
           intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
 
@@ -100,7 +101,12 @@ class SignInActivity : AppCompatActivity() {
     FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
       val token = it.result?.token ?: ""
 
-      ref.setValue(User(uid, displayName, email, photoUrl)).addOnCompleteListener {
+      val currentServer = intent.getStringExtra(SplashActivity.CURRENT_SERVER)
+      val currentChannel = intent.getStringExtra(SplashActivity.CURRENT_CHANNEL)
+
+      Log.d("test", currentServer + currentChannel)
+
+      ref.setValue(User(uid, displayName, email, photoUrl, currentServer, currentChannel)).addOnCompleteListener {
         val refToken = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
 
         refToken.setValue(true)

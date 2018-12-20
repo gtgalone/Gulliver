@@ -23,4 +23,6 @@
         <item>general</item>
         <item>trade</item>
     </string-array>
+
+    <string name="my_cities">My Cities</string>
 </resources>

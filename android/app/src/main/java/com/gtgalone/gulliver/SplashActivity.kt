@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Geocoder
+import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
@@ -151,9 +152,9 @@ class SplashActivity : AppCompatActivity() {
     val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
     if (location == null) {
       Log.d(TAG, "location null")
+//      changeActivityWithLocation(Location(""))
       locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000L, 0F, locationListener)
     } else {
-      Log.d(TAG, location.latitude.toString() + "," + location.longitude.toString())
       changeActivityWithLocation(location)
     }
   }

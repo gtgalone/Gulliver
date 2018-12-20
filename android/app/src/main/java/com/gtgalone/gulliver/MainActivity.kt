@@ -12,10 +12,11 @@ import com.gtgalone.gulliver.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.gtgalone.gulliver.models.ChatLog
-import com.gtgalone.gulliver.models.Location
+import com.gtgalone.gulliver.models.FavoriteServer
 import com.gtgalone.gulliver.views.DirectMessagesLogFrom
 import com.gtgalone.gulliver.views.DirectMessagesLogTo
 import com.gtgalone.gulliver.views.PeopleRow
+import com.gtgalone.gulliver.views.ServersRow
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_main.*
@@ -35,6 +36,15 @@ class MainActivity : AppCompatActivity() {
     setContentView(R.layout.activity_main)
     setSupportActionBar(toolbar)
 
+    recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
+    recycler_view_main_activity_log.adapter = adapter
+
+    fetchCurrentUser()
+    fetchUsers()
+
+    supportActionBar!!.title = intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER).serverDisplayName
+    main_activity_log_text_view.text = getString(R.string.channel, intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)[1])
+
     val toggle = ActionBarDrawerToggle(
       this,
       activity_main_layout,
@@ -46,40 +56,16 @@ class MainActivity : AppCompatActivity() {
     activity_main_layout.addDrawerListener(toggle)
     toggle.syncState()
 
-    fetchCurrentUser()
-    fetchUsers()
-
-    val location = intent.getParcelableExtra<Location>(SplashActivity.CURRENT_LOCATION) ?: return
-
-    Log.d("test", location.countryCode)
-    Log.d("test", location.adminArea)
-    Log.d("test", location.locality)
-
-    val channelArea: String
-    if (location.adminArea == location.locality) {
-      channelArea = getString(R.string.channel_area2, location.locality, location.countryCode)
-    } else {
-      channelArea = getString(R.string.channel_area1, location.locality, location.adminArea, location.countryCode)
-    }
-
-    supportActionBar!!.title = channelArea
-
-    recycler_view_main_activity_log.adapter = adapter
-
-
     main_activity_log_send_button.setOnClickListener {
       sendMessage()
     }
   }
 
   private fun listenForChatLog() {
-    Log.d("test", "/servers/${currentUser?.currentServer}/channels/${currentUser?.currentChannel}/chatLog")
     val chatLogRef = FirebaseDatabase.getInstance().getReference("/servers/${currentUser?.currentServer}/channels/${currentUser?.currentChannel}/chatLog")
-
     chatLogRef.addChildEventListener(object: ChildEventListener {
       override fun onChildAdded(p0: DataSnapshot, p1: String?) {
         val chatLog = p0.getValue(ChatLog::class.java) ?: return
-        Log.d("test", "/users/${chatLog.fromId}")
 
         FirebaseDatabase.getInstance().getReference("/users/${chatLog.fromId}")
           .addListenerForSingleValueEvent(object: ValueEventListener {
@@ -164,7 +150,7 @@ class MainActivity : AppCompatActivity() {
       override fun onDataChange(p0: DataSnapshot) {
         currentUser = p0.getValue(User::class.java)
         listenForChatLog()
-
+        fetchServers()
       }
 
       override fun onCancelled(p0: DatabaseError) {
@@ -184,8 +170,6 @@ class MainActivity : AppCompatActivity() {
   }
 
   override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-    Log.d("test", item?.itemId.toString() + R.id.menu_people)
-
     return when (item?.itemId) {
       R.id.menu_people -> {
         activity_main_layout.openDrawer(GravityCompat.END)
@@ -230,6 +214,27 @@ class MainActivity : AppCompatActivity() {
       override fun onCancelled(p0: DatabaseError) {
       }
     })
+  }
 
+  private fun fetchServers() {
+    Log.d("test", "fetchserver ${currentUser?.uid}")
+
+    FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/servers")
+      .addListenerForSingleValueEvent(object: ValueEventListener {
+        override fun onDataChange(p0: DataSnapshot) {
+          val adapterServer = GroupAdapter<ViewHolder>()
+          recycler_view_servers.adapter = adapterServer
+
+          p0.children.forEach {
+            val server = it.getValue(FavoriteServer::class.java) ?: return
+            adapterServer.add(ServersRow(server))
+          }
+
+          recycler_view_servers.adapter = adapterServer
+        }
+
+        override fun onCancelled(p0: DatabaseError) {
+        }
+      })
   }
 }

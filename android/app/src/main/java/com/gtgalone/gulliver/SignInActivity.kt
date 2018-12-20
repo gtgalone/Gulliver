@@ -15,7 +15,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.iid.FirebaseInstanceId
-import com.gtgalone.gulliver.models.Location
+import com.gtgalone.gulliver.models.FavoriteServer
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
 class SignInActivity : AppCompatActivity() {
@@ -76,17 +76,6 @@ class SignInActivity : AppCompatActivity() {
           val user = mAuth.currentUser!!
 
           saveUserToFirebaseDatabase(user.displayName!!, user.email!!, user.photoUrl.toString())
-          val location = intent.getParcelableExtra<Location>(SplashActivity.CURRENT_LOCATION)
-
-          val intent = Intent(this, MainActivity::class.java)
-          intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-          intent.putExtra(
-            SplashActivity.CURRENT_LOCATION,
-            location
-          )
-
-          startActivity(intent)
         } else {
           Log.d(TAG, "signInWithCredential:failure", it.exception)
           Toast.makeText(this, "Authentication Failed.", Toast.LENGTH_SHORT).show()
@@ -101,15 +90,32 @@ class SignInActivity : AppCompatActivity() {
     FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
       val token = it.result?.token ?: ""
 
-      val currentServer = intent.getStringExtra(SplashActivity.CURRENT_SERVER)
-      val currentChannel = intent.getStringExtra(SplashActivity.CURRENT_CHANNEL)
+      val currentServer = intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER)
+      val currentChannel = intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
 
-      Log.d("test", currentServer + currentChannel)
+      ref.setValue(User(uid, displayName, email, photoUrl, currentServer.serverId!!, currentChannel[0])).addOnCompleteListener {
+        val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
+        tokenRef.setValue(true)
 
-      ref.setValue(User(uid, displayName, email, photoUrl, currentServer, currentChannel)).addOnCompleteListener {
-        val refToken = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
+        val favoriteServerRef = FirebaseDatabase.getInstance().getReference("/users/$uid/servers/").push()
+        Log.d("test", currentServer.serverId + currentServer.serverDisplayName)
 
-        refToken.setValue(true)
+        favoriteServerRef.setValue(FavoriteServer(favoriteServerRef.key!!, currentServer.serverId, currentServer.serverDisplayName))
+
+        val nextIntent = Intent(this, MainActivity::class.java)
+        nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        nextIntent.putExtra(
+          SplashActivity.CURRENT_SERVER,
+          intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER)
+        )
+
+        nextIntent.putExtra(
+          SplashActivity.CURRENT_CHANNEL,
+          intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
+        )
+
+        startActivity(nextIntent)
       }
     }
   }

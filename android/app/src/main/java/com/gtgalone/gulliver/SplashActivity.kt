@@ -24,14 +24,13 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.gtgalone.gulliver.models.Channel
-import com.gtgalone.gulliver.models.Location
+import com.gtgalone.gulliver.models.FavoriteServer
 import com.gtgalone.gulliver.models.Server
 import org.jetbrains.anko.doAsync
 
 class SplashActivity : AppCompatActivity() {
   companion object {
     const val TAG = "SplashActivity"
-    const val CURRENT_LOCATION = "CurrentLocation"
     const val CURRENT_SERVER = "CurrentServer"
     const val CURRENT_CHANNEL = "CurrentChannel"
     const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
@@ -170,15 +169,15 @@ class SplashActivity : AppCompatActivity() {
 
       val countryCode = locationInformation.countryCode
       val adminArea = locationInformation.adminArea
-      val locality = locationInformation.locality
+      val locality = locationInformation.locality ?: locationInformation.adminArea
 
-      nextIntent.putExtra(CURRENT_LOCATION, Location(countryCode, adminArea, locality))
 
+      Log.d("test", locationInformation.toString())
       val displayName: String
-      if (locationInformation.adminArea == locationInformation.locality) {
-        displayName = getString(R.string.channel_area2, locationInformation.locality, locationInformation.countryCode)
+      if (adminArea == locality) {
+        displayName = getString(R.string.channel_area2, locality, countryCode)
       } else {
-        displayName = getString(R.string.channel_area1, locationInformation.locality, locationInformation.adminArea, locationInformation.countryCode)
+        displayName = getString(R.string.channel_area1, locality, adminArea, countryCode)
       }
 
       val name = countryCode.replace(" ", "").toLowerCase() + "-" +
@@ -192,57 +191,102 @@ class SplashActivity : AppCompatActivity() {
   private fun getServer(server: Server) {
     val serverNameRef = databaseReference.orderByChild("name").equalTo(server.name)
     serverNameRef.addListenerForSingleValueEvent(object: ValueEventListener {
-        override fun onDataChange(p0: DataSnapshot) {
-          Log.d(TAG, p0.childrenCount.toString())
-          Log.d(TAG, p0.hasChildren().toString())
+      override fun onDataChange(p0: DataSnapshot) {
+        if (!p0.hasChildren()) {
+          val serverRef = databaseReference.push()
+          serverRef.setValue(Server(serverRef.key!!, server.name, server.displayName, server.countryCode, server.adminArea, server.locality))
+            .addOnCompleteListener {
+              val channels = arrayListOf("general", "trade")
+              for (channel in channels) {
+                val channelRef = FirebaseDatabase.getInstance().getReference("/servers/${serverRef.key}/channels").push()
+                channelRef.setValue(Channel(channelRef.key!!, channel))
 
-          if (!p0.hasChildren()) {
-            val serverRef = databaseReference.push()
-            serverRef.setValue(Server(serverRef.key!!, server.name, server.displayName, server.countryCode, server.adminArea, server.locality))
-              .addOnCompleteListener {
-                val channels = arrayListOf("general", "trade")
-                for (channel in channels) {
-                  val channelRef = FirebaseDatabase.getInstance().getReference("/servers/${serverRef.key!!}/channels").push()
-                  channelRef.setValue(Channel(channelRef.key!!, channel))
+                if (channel == "general") {
 
-                  if (channel == "general") {
-                    nextIntent.putExtra(CURRENT_SERVER, serverRef.key!!)
-                    nextIntent.putExtra(CURRENT_CHANNEL, channelRef.key!!)
+                  val uid = FirebaseAuth.getInstance().uid
+                  if (uid != null) {
+                    FirebaseDatabase.getInstance().getReference("/users/$uid/currentServer").setValue(serverRef.key)
+                    FirebaseDatabase.getInstance().getReference("/users/$uid/currentChannel").setValue(channelRef.key)
 
-                    nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(nextIntent)
-                    finish()
-                    serverNameRef.removeEventListener(this)
+                    val favoriteServerRef = FirebaseDatabase.getInstance().getReference("/users/$uid/servers")
+                    favoriteServerRef.orderByChild("serverId").equalTo(serverRef.key)
+                      .addListenerForSingleValueEvent(object: ValueEventListener {
+                        override fun onDataChange(p0: DataSnapshot) {
+                          if (!p0.hasChildren()) {
+                            val pushFavoriteServerRef = favoriteServerRef.push()
+                            pushFavoriteServerRef.setValue(FavoriteServer(pushFavoriteServerRef.key, serverRef.key, server.displayName))
+                            favoriteServerRef.removeEventListener(this)
+                          }
+                        }
+
+                        override fun onCancelled(p0: DatabaseError) {
+                        }
+                      })
                   }
+
+                  Log.d("test", server.displayName)
+
+                  nextIntent.putExtra(CURRENT_SERVER, FavoriteServer(null, serverRef.key!!, server.displayName))
+                  nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channelRef.key!!, channel))
+
+                  nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                  startActivity(nextIntent)
+                  finish()
+                  serverNameRef.removeEventListener(this)
                 }
               }
-          } else {
-            p0.children.forEach {
-              val serverInfo = it.getValue(Server::class.java) ?: return
-              val channelRef = FirebaseDatabase.getInstance().getReference("/servers/${serverInfo.id}/channels").limitToFirst(1)
-              channelRef.addListenerForSingleValueEvent(object: ValueEventListener {
-                  override fun onDataChange(p0: DataSnapshot) {
-                    val channel = p0.children.first().getValue(Channel::class.java) ?: return
-
-                    nextIntent.putExtra(CURRENT_SERVER, serverInfo.id)
-                    nextIntent.putExtra(CURRENT_CHANNEL, channel.id)
-
-                    nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(nextIntent)
-                    finish()
-                    channelRef.removeEventListener(this)
-                  }
-
-                  override fun onCancelled(p0: DatabaseError) {
-                  }
-                })
             }
+        } else {
+          p0.children.forEach {
+            val serverInfo = it.getValue(Server::class.java) ?: return
+            val channelRef = FirebaseDatabase.getInstance().getReference("/servers/${serverInfo.id}/channels").limitToFirst(1)
+            channelRef.addListenerForSingleValueEvent(object: ValueEventListener {
+              override fun onDataChange(p0: DataSnapshot) {
+                Log.d("test", "in channel")
+
+                val channel = p0.children.first().getValue(Channel::class.java) ?: return
+
+                val uid = FirebaseAuth.getInstance().uid
+                if (uid != null) {
+                  FirebaseDatabase.getInstance().getReference("/users/$uid/currentServer").setValue(serverInfo.id)
+                  FirebaseDatabase.getInstance().getReference("/users/$uid/currentChannel").setValue(channel.id)
+
+                  val favoriteServerRef = FirebaseDatabase.getInstance().getReference("/users/$uid/servers")
+                  favoriteServerRef.orderByChild("serverId").equalTo(serverInfo.id)
+                    .addListenerForSingleValueEvent(object: ValueEventListener {
+                      override fun onDataChange(p0: DataSnapshot) {
+                        if (!p0.hasChildren()) {
+                          val pushFavoriteServerRef = favoriteServerRef.push()
+                          pushFavoriteServerRef.setValue(FavoriteServer(pushFavoriteServerRef.key, serverInfo.id, serverInfo.displayName))
+                          favoriteServerRef.removeEventListener(this)
+                        }
+                      }
+
+                      override fun onCancelled(p0: DatabaseError) {
+                      }
+                    })
+                }
+
+                nextIntent.putExtra(CURRENT_SERVER, FavoriteServer(null, serverInfo.id, server.displayName))
+                nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channel.id, channel.name))
+
+                nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(nextIntent)
+                finish()
+                channelRef.removeEventListener(this)
+              }
+
+              override fun onCancelled(p0: DatabaseError) {
+              }
+            })
           }
         }
+      }
 
-        override fun onCancelled(p0: DatabaseError) {
-        }
-      })
+      override fun onCancelled(p0: DatabaseError) {
+      }
+    })
   }
 
   /**

@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@drawable/splash_container</item>
-    </style>
 
-    <style name="SignInTheme" parent="Theme.AppCompat.NoActionBar" />
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
@@ -13,12 +9,23 @@
         <item name="android:colorBackground">@color/colorWhite</item>
         <item name="android:textColor">@color/colorText</item>
         <item name="android:textColorPrimary">@color/colorText</item>
+        <item name="android:textColorSecondary">@color/colorWhite</item>
     </style>
+
+    <style name="SplashTheme" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/splash_container</item>
+    </style>
+
+    <style name="SignInTheme" parent="AppTheme" />
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
+    <style name="AppTheme.AppBarOverlay" parent="AppTheme"/>
+
+    <style name="Toolbar.TitleText" parent="TextAppearance.AppCompat.Title">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/colorWhite</item>
+    </style>
 </resources>

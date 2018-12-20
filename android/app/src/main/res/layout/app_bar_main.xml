@@ -15,10 +15,22 @@
         <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
+                android:layout_height="40dp"
                 android:background="?attr/colorPrimary"
-                app:popupTheme="@style/AppTheme.PopupOverlay"/>
-
+                app:titleTextAppearance="@style/Toolbar.TitleText"
+                app:contentInsetStartWithNavigation="0dp"/>
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/main_activity_log_text_view"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:textColor="@color/colorWhite"
+                android:textAlignment="center"
+                android:paddingBottom="8dp"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"/>
     </com.google.android.material.appbar.AppBarLayout>
 
     <include layout="@layout/content_main"/>

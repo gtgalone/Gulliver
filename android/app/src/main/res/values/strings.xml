@@ -11,11 +11,16 @@
     <string name="settings">settings</string>
     <string name="channel_area1">%1$s (%2$s, %3$s)</string>
     <string name="channel_area2">%1$s (%2$s)</string>
-    <string name="close">×</string>
+    <string name="channel"># %1$s</string>
+    <string name='enter_message'>Enter Message</string>
     <string name="google_signin_button">Sign In with Google</string>
     <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
     <string name="default_notification_channel_name" translatable="true">Weather</string>
     <string name="fcm_message">fcm_message</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string-array name="channels">
+        <item>general</item>
+        <item>trade</item>
+    </string-array>
 </resources>

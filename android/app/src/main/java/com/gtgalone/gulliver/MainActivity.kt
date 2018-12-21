@@ -1,5 +1,6 @@
 package com.gtgalone.gulliver
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
@@ -7,6 +8,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
@@ -28,6 +31,9 @@ import kotlinx.android.synthetic.main.activity_main_left_drawer.*
 import kotlinx.android.synthetic.main.activity_main_servers_row.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.onComplete
+import org.jetbrains.anko.uiThread
 
 class MainActivity : AppCompatActivity() {
   companion object {
@@ -36,6 +42,7 @@ class MainActivity : AppCompatActivity() {
   }
 
   private val adapter = GroupAdapter<ViewHolder>()
+  private lateinit var chatLogRef: DatabaseReference
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -50,13 +57,19 @@ class MainActivity : AppCompatActivity() {
 
     supportActionBar!!.title = intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER).serverDisplayName
 
-    val toggle = ActionBarDrawerToggle(
+    val toggle = object: ActionBarDrawerToggle(
       this,
       activity_main_layout,
       toolbar,
       R.string.navigation_drawer_open,
       R.string.navigation_drawer_close
-    )
+    ) {
+      override fun onDrawerOpened(drawerView: View) {
+        super.onDrawerOpened(drawerView)
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(drawerView.windowToken, 0)
+      }
+    }
 
     activity_main_layout.addDrawerListener(toggle)
     toggle.syncState()
@@ -68,6 +81,7 @@ class MainActivity : AppCompatActivity() {
 
   private fun sendMessage() {
     if (main_activity_log_edit_text.text.isEmpty()) return
+    Log.d("test", "send message")
 
     val body = main_activity_log_edit_text.text.toString()
 
@@ -105,7 +119,6 @@ class MainActivity : AppCompatActivity() {
     return when (item?.itemId) {
       R.id.menu_people -> {
         activity_main_layout.openDrawer(GravityCompat.END)
-//        changeActivity(PeopleActivity::class.java, false)
         true
       }
       R.id.menu_direct_message -> {
@@ -121,62 +134,59 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
+  private val chatLogChildEventListener = object: ChildEventListener {
+    override fun onChildAdded(p0: DataSnapshot, p1: String?) {
+      Log.d("test", "child add")
+      val chatLog = p0.getValue(ChatLog::class.java) ?: return
+
+      when(chatLog.fromId) {
+        currentUser?.uid -> {
+          Log.d("test", "me")
+          adapter.add(
+            DirectMessagesLogTo(
+              chatLog.text,
+              currentUser!!,
+              chatLog.timeStamp
+            )
+          )
+        }
+        else -> {
+          Log.d("test", "others")
+          adapter.add(
+            DirectMessagesLogFrom(
+              chatLog.text,
+              chatLog.fromId,
+              chatLog.timeStamp
+            )
+          )
+        }
+      }
+
+      recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
+      recycler_view_main_activity_log.adapter = adapter
+    }
+
+    override fun onChildChanged(p0: DataSnapshot, p1: String?) {
+
+    }
+
+    override fun onChildMoved(p0: DataSnapshot, p1: String?) {
+
+    }
+
+    override fun onChildRemoved(p0: DataSnapshot) {
+
+    }
+
+    override fun onCancelled(p0: DatabaseError) {
+
+    }
+  }
+
   private fun listenForChatLog() {
-    Log.d("test", currentUser?.currentServer)
-    val chatLogRef = FirebaseDatabase.getInstance().getReference("/servers/${currentUser?.currentServer}/channels/${currentUser?.currentChannel}/chatLog")
-    chatLogRef.addChildEventListener(object: ChildEventListener {
-      override fun onChildAdded(p0: DataSnapshot, p1: String?) {
-        val chatLog = p0.getValue(ChatLog::class.java) ?: return
-
-        FirebaseDatabase.getInstance().getReference("/users/${chatLog.fromId}")
-          .addListenerForSingleValueEvent(object: ValueEventListener {
-            override fun onDataChange(userDataSnapshot: DataSnapshot) {
-              val fromUser = userDataSnapshot.getValue(User::class.java)
-              when(chatLog.fromId) {
-                currentUser?.uid -> {
-                  adapter.add(
-                    DirectMessagesLogTo(
-                      chatLog.text,
-                      currentUser!!,
-                      chatLog.timeStamp
-                    )
-                  )
-                }
-                else -> {
-                  adapter.add(
-                    DirectMessagesLogFrom(
-                      chatLog.text,
-                      fromUser!!,
-                      chatLog.timeStamp
-                    )
-                  )
-                }
-              }
-              recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
-              recycler_view_main_activity_log.adapter = adapter
-            }
-
-            override fun onCancelled(p0: DatabaseError) {
-            }
-          })
-      }
-
-      override fun onChildChanged(p0: DataSnapshot, p1: String?) {
-
-      }
-
-      override fun onChildMoved(p0: DataSnapshot, p1: String?) {
-
-      }
-
-      override fun onChildRemoved(p0: DataSnapshot) {
-
-      }
-
-      override fun onCancelled(p0: DatabaseError) {
-
-      }
-    })
+    chatLogRef = FirebaseDatabase.getInstance().getReference("/servers/${currentUser?.currentServer}/channels/${currentUser?.currentChannel}/chatLog")
+    chatLogRef.removeEventListener(chatLogChildEventListener)
+    chatLogRef.addChildEventListener(chatLogChildEventListener)
   }
 
   private fun fetchCurrentUser() {

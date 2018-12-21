@@ -225,8 +225,6 @@ class SplashActivity : AppCompatActivity() {
                       })
                   }
 
-                  Log.d("test", server.displayName)
-
                   nextIntent.putExtra(CURRENT_SERVER, FavoriteServer(null, serverRef.key!!, server.displayName))
                   nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channelRef.key!!, channel))
 
@@ -234,7 +232,6 @@ class SplashActivity : AppCompatActivity() {
 
                   startActivity(nextIntent)
                   finish()
-                  serverNameRef.removeEventListener(this)
                 }
               }
             }
@@ -260,7 +257,6 @@ class SplashActivity : AppCompatActivity() {
                         if (!p0.hasChildren()) {
                           val pushFavoriteServerRef = favoriteServerRef.push()
                           pushFavoriteServerRef.setValue(FavoriteServer(pushFavoriteServerRef.key, serverInfo.id, serverInfo.displayName))
-                          favoriteServerRef.removeEventListener(this)
                         }
                       }
 
@@ -275,7 +271,6 @@ class SplashActivity : AppCompatActivity() {
                 nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(nextIntent)
                 finish()
-                channelRef.removeEventListener(this)
               }
 
               override fun onCancelled(p0: DatabaseError) {

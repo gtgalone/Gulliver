@@ -98,6 +98,7 @@ class SignInActivity : AppCompatActivity() {
       ref.limitToFirst(1)
         .addListenerForSingleValueEvent(object: ValueEventListener {
           override fun onDataChange(p0: DataSnapshot) {
+            val nextIntent = Intent(this@SignInActivity, MainActivity::class.java)
 
             if (p0.hasChildren()) {
                 val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
@@ -110,7 +111,20 @@ class SignInActivity : AppCompatActivity() {
                       if (!p0.hasChildren()) {
                         val pushFavoriteServerRef = favoriteServerRef.push()
                         pushFavoriteServerRef.setValue(FavoriteServer(pushFavoriteServerRef.key, currentServer.serverId, currentServer.serverDisplayName))
-                        favoriteServerRef.removeEventListener(this)
+
+                        nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                        nextIntent.putExtra(
+                          SplashActivity.CURRENT_SERVER,
+                          intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER)
+                        )
+
+                        nextIntent.putExtra(
+                          SplashActivity.CURRENT_CHANNEL,
+                          intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
+                        )
+
+                        startActivity(nextIntent)
                       }
                     }
 
@@ -127,7 +141,6 @@ class SignInActivity : AppCompatActivity() {
 
                 favoriteServerRef.setValue(FavoriteServer(favoriteServerRef.key!!, currentServer.serverId, currentServer.serverDisplayName))
 
-                val nextIntent = Intent(this@SignInActivity, MainActivity::class.java)
                 nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
 
                 nextIntent.putExtra(

@@ -73,7 +73,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
             currentUser.uid -> adapter.add(
               DirectMessagesLogFrom(
                 directMessage.text,
-                toUser,
+                toUser.uid,
                 directMessage.timeStamp
               )
             )

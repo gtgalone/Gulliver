@@ -2,7 +2,6 @@ package com.gtgalone.gulliver
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -10,7 +9,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
 import com.gtgalone.gulliver.models.User
@@ -28,12 +26,8 @@ import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main_left_drawer.*
-import kotlinx.android.synthetic.main.activity_main_servers_row.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.onComplete
-import org.jetbrains.anko.uiThread
 
 class MainActivity : AppCompatActivity() {
   companion object {
@@ -49,13 +43,13 @@ class MainActivity : AppCompatActivity() {
     setContentView(R.layout.activity_main)
     setSupportActionBar(toolbar)
 
+    supportActionBar!!.title = intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER).serverDisplayName
+
     recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
     recycler_view_main_activity_log.adapter = adapter
 
     fetchCurrentUser()
     fetchUsers()
-
-    supportActionBar!!.title = intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER).serverDisplayName
 
     val toggle = object: ActionBarDrawerToggle(
       this,

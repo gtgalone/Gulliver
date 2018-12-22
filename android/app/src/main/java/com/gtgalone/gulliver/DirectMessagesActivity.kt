@@ -2,6 +2,7 @@ package com.gtgalone.gulliver
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.gtgalone.gulliver.models.DirectMessageLog
@@ -14,20 +15,19 @@ import com.google.firebase.database.FirebaseDatabase
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.app_bar_direct_messages.*
-import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_direct_messages.*
 
 class DirectMessagesActivity : AppCompatActivity() {
   private val adapter = GroupAdapter<ViewHolder>()
+  private val directMessagesMap = HashMap<String, DirectMessageLog>()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_direct_messages)
+    setSupportActionBar(toolbar_direct_messages)
 
-    setSupportActionBar(toolbar)
-
-    toolbar_direct_messages.title = "Direct Messages"
-//    toolbar_direct_messages.setDisplayHomeAsUpEnabled(true)
+    supportActionBar!!.title = "Direct Messages"
+    supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
     recycler_view_direct_messages.adapter = adapter
     recycler_view_direct_messages.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
@@ -42,7 +42,10 @@ class DirectMessagesActivity : AppCompatActivity() {
     listenForMessages()
   }
 
-  val directMessagesMap = HashMap<String, DirectMessageLog>()
+  override fun onSupportNavigateUp(): Boolean {
+    finish()
+    return super.onSupportNavigateUp()
+  }
 
   private fun refreshRecyclerViewMessage() {
     adapter.clear()
@@ -50,6 +53,7 @@ class DirectMessagesActivity : AppCompatActivity() {
       adapter.add(DirectMessagesRow(it))
     }
   }
+
   private fun listenForMessages() {
     val uid = FirebaseAuth.getInstance().uid
     val ref = FirebaseDatabase.getInstance().getReference("/direct-messages/$uid")

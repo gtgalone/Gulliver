@@ -30,7 +30,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_direct_messages_log)
-    setSupportActionBar(toolbar)
+    setSupportActionBar(toolbar_direct_messages_log)
 
     val toUser: User
     if (intent.getParcelableExtra<User>(MainActivity.USER_KEY) != null) {
@@ -44,14 +44,19 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
     functions = FirebaseFunctions.getInstance()
 
-    toolbar_direct_messages_log.title = toUser.displayName
-//    toolbar_direct_messages_log.setDisplayHomeAsUpEnabled(true)
+    supportActionBar!!.title = toUser.displayName
+    supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
     listenForMessages(toUser)
 
     direct_messages_log_send_button.setOnClickListener {
       sendMessage(toUser)
     }
+  }
+
+  override fun onSupportNavigateUp(): Boolean {
+    finish()
+    return super.onSupportNavigateUp()
   }
 
   private fun listenForMessages(toUser: User) {

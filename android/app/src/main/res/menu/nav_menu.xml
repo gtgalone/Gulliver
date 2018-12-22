@@ -1,15 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_search"
+        android:icon="@drawable/ic_search"
+        android:title="@string/search"
+        app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/menu_direct_message"
+        android:icon="@drawable/ic_direct_message"
+        android:title="@string/direct_message"
+        app:showAsAction="ifRoom"/>
     <item
         android:id="@+id/menu_people"
         android:icon="@drawable/ic_people"
-        android:title="People"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/menu_direct_message"
-        android:title="Direct Message" />
+        android:title="@string/people"
+        app:showAsAction="collapseActionView"/>
     <item
         android:id="@+id/menu_sign_out"
-        android:title="Sign Out"
+        android:title="@string/sign_out"
         app:showAsAction="collapseActionView" />
 </menu>

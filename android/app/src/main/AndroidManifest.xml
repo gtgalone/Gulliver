@@ -47,15 +47,8 @@
         <activity
                 android:name=".SignInActivity"
                 android:theme="@style/SignInTheme" />
-        <activity android:name=".DirectMessagesActivity">
-            <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value=".MainActivity" />
-        </activity>
+        <activity android:name=".DirectMessagesActivity"/>
         <activity android:name=".DirectMessagesLogActivity">
-            <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value=".DirectMessagesActivity" />
             <intent-filter>
                 <action android:name="DIRECT_MESSAGES_LOG_ACTIVITY" />
                 <category android:name="android.intent.category.DEFAULT" />

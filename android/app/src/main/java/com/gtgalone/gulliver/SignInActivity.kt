@@ -54,6 +54,23 @@ class SignInActivity : AppCompatActivity() {
     startActivityForResult(signInIntent, RC_SIGN_IN)
   }
 
+  private fun changeAcitivity() {
+    val nextIntent = Intent(this@SignInActivity, MainActivity::class.java)
+
+    nextIntent.putExtra(
+      SplashActivity.CURRENT_SERVER,
+      intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER)
+    )
+
+    nextIntent.putExtra(
+      SplashActivity.CURRENT_CHANNEL,
+      intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
+    )
+
+    startActivity(nextIntent)
+    finish()
+  }
+
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
     Log.d(TAG, requestCode.toString())
@@ -98,7 +115,6 @@ class SignInActivity : AppCompatActivity() {
       ref.limitToFirst(1)
         .addListenerForSingleValueEvent(object: ValueEventListener {
           override fun onDataChange(p0: DataSnapshot) {
-            val nextIntent = Intent(this@SignInActivity, MainActivity::class.java)
 
             if (p0.hasChildren()) {
                 val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
@@ -112,19 +128,9 @@ class SignInActivity : AppCompatActivity() {
                         val pushFavoriteServerRef = favoriteServerRef.push()
                         pushFavoriteServerRef.setValue(FavoriteServer(pushFavoriteServerRef.key, currentServer.serverId, currentServer.serverDisplayName))
 
-                        nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-                        nextIntent.putExtra(
-                          SplashActivity.CURRENT_SERVER,
-                          intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER)
-                        )
-
-                        nextIntent.putExtra(
-                          SplashActivity.CURRENT_CHANNEL,
-                          intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
-                        )
-
-                        startActivity(nextIntent)
+                        changeAcitivity()
+                      } else {
+                        changeAcitivity()
                       }
                     }
 
@@ -141,19 +147,7 @@ class SignInActivity : AppCompatActivity() {
 
                 favoriteServerRef.setValue(FavoriteServer(favoriteServerRef.key!!, currentServer.serverId, currentServer.serverDisplayName))
 
-                nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-                nextIntent.putExtra(
-                  SplashActivity.CURRENT_SERVER,
-                  intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER)
-                )
-
-                nextIntent.putExtra(
-                  SplashActivity.CURRENT_CHANNEL,
-                  intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
-                )
-
-                startActivity(nextIntent)
+                changeAcitivity()
               }
             }
           }

@@ -9,6 +9,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.PopupMenu
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
 import com.gtgalone.gulliver.models.User
@@ -28,6 +29,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main_left_drawer.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import org.jetbrains.anko.doAsync
 
 class MainActivity : AppCompatActivity() {
   companion object {
@@ -37,13 +39,16 @@ class MainActivity : AppCompatActivity() {
 
   private val adapter = GroupAdapter<ViewHolder>()
   private lateinit var chatLogRef: DatabaseReference
+  private lateinit var currentServer: FavoriteServer
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
     setSupportActionBar(toolbar)
 
-    supportActionBar!!.title = intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER).serverDisplayName
+    currentServer = intent.getParcelableExtra(SplashActivity.CURRENT_SERVER)
+
+    supportActionBar!!.title = currentServer.serverDisplayName
 
     recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
     recycler_view_main_activity_log.adapter = adapter
@@ -70,6 +75,22 @@ class MainActivity : AppCompatActivity() {
 
     main_activity_log_send_button.setOnClickListener {
       sendMessage()
+    }
+
+    activity_main_left_drawer_menu_image_view.setOnClickListener {
+      val popup = PopupMenu(this@MainActivity, it)
+      popup.menuInflater.inflate(R.menu.account_menu, popup.menu)
+      popup.setOnMenuItemClickListener { menuItem ->
+        when (menuItem.itemId) {
+          R.id.account_menu_sign_out -> {
+            FirebaseAuth.getInstance().signOut()
+            changeActivity(SplashActivity::class.java)
+            return@setOnMenuItemClickListener true
+          }
+          else -> return@setOnMenuItemClickListener true
+        }
+      }
+      popup.show()
     }
   }
 
@@ -100,8 +121,8 @@ class MainActivity : AppCompatActivity() {
 
   private fun changeActivity(activity: Class<*>, reset: Boolean = true) {
     val intent = Intent(this, activity)
-    if (reset) intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
     startActivity(intent)
+    if (reset) finish()
   }
 
   override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -117,11 +138,6 @@ class MainActivity : AppCompatActivity() {
       }
       R.id.menu_direct_message -> {
         changeActivity(DirectMessagesActivity::class.java, false)
-        true
-      }
-      R.id.menu_sign_out -> {
-        FirebaseAuth.getInstance().signOut()
-        changeActivity(SignInActivity::class.java)
         true
       }
       else -> super.onOptionsItemSelected(item)
@@ -202,7 +218,7 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun fetchUsers() {
-    val ref = FirebaseDatabase.getInstance().getReference("/users")
+    val ref = FirebaseDatabase.getInstance().getReference("/users").orderByChild("currentServer").equalTo(currentServer.serverId)
 
     ref.addListenerForSingleValueEvent(object : ValueEventListener {
       override fun onDataChange(p0: DataSnapshot) {
@@ -245,11 +261,17 @@ class MainActivity : AppCompatActivity() {
               val serversRow = item as ServersRow
 
               if (serversRow.server.serverId == currentUser?.currentServer) return@setOnItemClickListener
-              supportActionBar!!.title = serversRow.server.serverDisplayName
-              FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentServer")
-                .setValue(serversRow.server.serverId)
+              currentServer = serversRow.server
+              supportActionBar!!.title = currentServer.serverDisplayName
 
-              FirebaseDatabase.getInstance().getReference("/servers/${serversRow.server.serverId}/channels").limitToFirst(1)
+              doAsync {
+                fetchUsers()
+
+                FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentServer")
+                  .setValue(currentServer.serverId)
+              }
+
+              FirebaseDatabase.getInstance().getReference("/servers/${currentServer.serverId}/channels").limitToFirst(1)
                 .addListenerForSingleValueEvent(object: ValueEventListener {
                   override fun onDataChange(channels: DataSnapshot) {
                     FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentChannel")

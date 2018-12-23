@@ -228,10 +228,7 @@ class SplashActivity : AppCompatActivity() {
                   nextIntent.putExtra(CURRENT_SERVER, FavoriteServer(null, serverRef.key!!, server.displayName))
                   nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channelRef.key!!, channel))
 
-                  nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-                  startActivity(nextIntent)
-                  finish()
+                  changeActivity()
                 }
               }
             }
@@ -264,13 +261,10 @@ class SplashActivity : AppCompatActivity() {
                       }
                     })
                 }
-
                 nextIntent.putExtra(CURRENT_SERVER, FavoriteServer(null, serverInfo.id, server.displayName))
                 nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channel.id, channel.name))
 
-                nextIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(nextIntent)
-                finish()
+                changeActivity()
               }
 
               override fun onCancelled(p0: DatabaseError) {
@@ -283,6 +277,11 @@ class SplashActivity : AppCompatActivity() {
       override fun onCancelled(p0: DatabaseError) {
       }
     })
+  }
+
+  private fun changeActivity() {
+    startActivity(nextIntent)
+    finish()
   }
 
   /**

@@ -16,8 +16,4 @@
         android:icon="@drawable/ic_people"
         android:title="@string/people"
         app:showAsAction="collapseActionView"/>
-    <item
-        android:id="@+id/menu_sign_out"
-        android:title="@string/sign_out"
-        app:showAsAction="collapseActionView" />
 </menu>

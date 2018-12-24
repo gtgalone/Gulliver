@@ -12,12 +12,9 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
-import com.gtgalone.gulliver.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.gtgalone.gulliver.models.Channel
-import com.gtgalone.gulliver.models.ChatLog
-import com.gtgalone.gulliver.models.FavoriteServer
+import com.gtgalone.gulliver.models.*
 import com.gtgalone.gulliver.views.DirectMessagesLogFrom
 import com.gtgalone.gulliver.views.DirectMessagesLogTo
 import com.gtgalone.gulliver.views.PeopleRow
@@ -32,29 +29,22 @@ import kotlinx.android.synthetic.main.content_main.*
 import org.jetbrains.anko.doAsync
 
 class MainActivity : AppCompatActivity() {
-  companion object {
-    const val USER_KEY = "USER_KEY"
-    var currentUser: User? = null
-  }
-
   private val adapter = GroupAdapter<ViewHolder>()
   private lateinit var chatLogRef: DatabaseReference
-  private lateinit var currentServer: FavoriteServer
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
     setSupportActionBar(toolbar)
 
-    currentServer = intent.getParcelableExtra(SplashActivity.CURRENT_SERVER)
-
-    supportActionBar!!.title = currentServer.serverDisplayName
+    val currentServer = intent.getParcelableExtra<Server>(SplashActivity.CURRENT_SERVER)
+    setTitleForActionBar(currentServer)
 
     recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
     recycler_view_main_activity_log.adapter = adapter
 
     fetchCurrentUser()
-    fetchUsers()
+    fetchUsers(currentServer.id)
 
     val toggle = object: ActionBarDrawerToggle(
       this,
@@ -79,7 +69,7 @@ class MainActivity : AppCompatActivity() {
 
     activity_main_left_drawer_menu_image_view.setOnClickListener {
       val popup = PopupMenu(this@MainActivity, it)
-      popup.menuInflater.inflate(R.menu.account_menu, popup.menu)
+      popup.menuInflater.inflate(R.menu.menu_account, popup.menu)
       popup.setOnMenuItemClickListener { menuItem ->
         when (menuItem.itemId) {
           R.id.account_menu_sign_out -> {
@@ -92,6 +82,10 @@ class MainActivity : AppCompatActivity() {
       }
       popup.show()
     }
+
+    activity_main_left_drawer_add_city_layout.setOnClickListener {
+      startActivity(Intent(this, AddCityActivity::class.java))
+    }
   }
 
   private fun sendMessage() {
@@ -102,7 +96,7 @@ class MainActivity : AppCompatActivity() {
 
     val chatLog = FirebaseDatabase.getInstance().getReference("/servers/${currentUser!!.currentServer}/channels/${currentUser!!.currentChannel}/chatLog").push()
 
-    val chat = ChatLog(chatLog.key!!, body, currentUser!!.uid, currentUser!!.currentChannel, System.currentTimeMillis() / 1000)
+    val chat = ChatLog(chatLog.key!!, body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis() / 1000)
 
     chatLog.setValue(chat)
 
@@ -126,7 +120,7 @@ class MainActivity : AppCompatActivity() {
   }
 
   override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-    menuInflater.inflate(R.menu.nav_menu, menu)
+    menuInflater.inflate(R.menu.menu_nav, menu)
     return super.onCreateOptionsMenu(menu)
   }
 
@@ -175,21 +169,36 @@ class MainActivity : AppCompatActivity() {
       recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
       recycler_view_main_activity_log.adapter = adapter
     }
+    override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
+    override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
+    override fun onChildRemoved(p0: DataSnapshot) {}
+    override fun onCancelled(p0: DatabaseError) {}
+  }
 
-    override fun onChildChanged(p0: DataSnapshot, p1: String?) {
+  private fun setTitleForActionBar(currentServer: Server? = null) {
+    if (currentServer != null) {
+      supportActionBar?.title = currentServer.locality
 
-    }
+      if (currentServer.locality == currentServer.adminArea) {
+        supportActionBar?.subtitle = currentServer.countryCode
+      } else {
+        supportActionBar?.subtitle = currentServer.adminArea + ", " + currentServer.countryCode
+      }
+    } else {
+      FirebaseDatabase.getInstance().getReference("/servers/${currentUser?.currentServer}")
+        .addListenerForSingleValueEvent(object: ValueEventListener {
+          override fun onDataChange(serverDataSnapshot: DataSnapshot) {
+            val server = serverDataSnapshot.getValue(Server::class.java) ?: return
+            supportActionBar?.title = server.locality
 
-    override fun onChildMoved(p0: DataSnapshot, p1: String?) {
-
-    }
-
-    override fun onChildRemoved(p0: DataSnapshot) {
-
-    }
-
-    override fun onCancelled(p0: DatabaseError) {
-
+            if (server.locality == server.adminArea) {
+              supportActionBar?.subtitle = server.countryCode
+            } else {
+              supportActionBar?.subtitle = server.adminArea + ", " + server.countryCode
+            }
+          }
+          override fun onCancelled(p0: DatabaseError) {}
+        })
     }
   }
 
@@ -208,17 +217,16 @@ class MainActivity : AppCompatActivity() {
         currentUser = p0.getValue(User::class.java)
         Picasso.get().load(currentUser?.photoUrl).into(activity_main_left_drawer_circle_image_view)
         activity_main_left_drawer_text_view.text = currentUser?.displayName
+        setTitleForActionBar()
         listenForChatLog()
         fetchServers()
       }
-
-      override fun onCancelled(p0: DatabaseError) {
-      }
+      override fun onCancelled(p0: DatabaseError) {}
     })
   }
 
-  private fun fetchUsers() {
-    val ref = FirebaseDatabase.getInstance().getReference("/users").orderByChild("currentServer").equalTo(currentServer.serverId)
+  private fun fetchUsers(serverId: String?) {
+    val ref = FirebaseDatabase.getInstance().getReference("/users").orderByChild("currentServer").equalTo(serverId)
 
     ref.addListenerForSingleValueEvent(object : ValueEventListener {
       override fun onDataChange(p0: DataSnapshot) {
@@ -238,9 +246,7 @@ class MainActivity : AppCompatActivity() {
         }
         recycler_view_people.adapter = adapter
       }
-
-      override fun onCancelled(p0: DatabaseError) {
-      }
+      override fun onCancelled(p0: DatabaseError) {}
     })
   }
 
@@ -252,26 +258,24 @@ class MainActivity : AppCompatActivity() {
         override fun onDataChange(p0: DataSnapshot) {
           val adapterServer = GroupAdapter<ViewHolder>()
           recycler_view_servers.adapter = adapterServer
-
           p0.children.forEach {
             val server = it.getValue(FavoriteServer::class.java) ?: return
             adapterServer.add(ServersRow(server, currentUser!!))
 
             adapterServer.setOnItemClickListener { item, view ->
-              val serversRow = item as ServersRow
+              val serverId = (item as ServersRow).favoriteServer.serverId
 
-              if (serversRow.server.serverId == currentUser?.currentServer) return@setOnItemClickListener
-              currentServer = serversRow.server
-              supportActionBar!!.title = currentServer.serverDisplayName
+              if (serverId == currentUser?.currentServer) return@setOnItemClickListener
+
 
               doAsync {
-                fetchUsers()
+                fetchUsers(serverId)
 
                 FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentServer")
-                  .setValue(currentServer.serverId)
+                  .setValue(serverId)
               }
 
-              FirebaseDatabase.getInstance().getReference("/servers/${currentServer.serverId}/channels").limitToFirst(1)
+              FirebaseDatabase.getInstance().getReference("/servers/$serverId/channels").limitToFirst(1)
                 .addListenerForSingleValueEvent(object: ValueEventListener {
                   override fun onDataChange(channels: DataSnapshot) {
                     FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentChannel")
@@ -281,19 +285,21 @@ class MainActivity : AppCompatActivity() {
                         fetchCurrentUser()
                       }
                   }
-                  override fun onCancelled(p0: DatabaseError) {
-                  }
+                  override fun onCancelled(p0: DatabaseError) {}
                 })
             }
 
           }
 
           recycler_view_servers.adapter = adapterServer
-
         }
-
-        override fun onCancelled(p0: DatabaseError) {
-        }
+        override fun onCancelled(p0: DatabaseError) {}
       })
   }
+
+  companion object {
+    const val USER_KEY = "USER_KEY"
+    var currentUser: User? = null
+  }
+
 }

@@ -16,8 +16,8 @@
                 android:id="@+id/toolbar_direct_messages"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                app:titleTextAppearance="@style/Toolbar.TitleText"
-                android:background="?attr/colorPrimary"/>
+                android:background="@drawable/background"
+                app:titleTextAppearance="@style/Toolbar.TitleText"/>
 
     </com.google.android.material.appbar.AppBarLayout>
 

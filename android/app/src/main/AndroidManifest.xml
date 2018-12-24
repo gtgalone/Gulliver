@@ -15,43 +15,44 @@
             android:theme="@style/AppTheme">
         <meta-data
                 android:name="com.google.firebase.messaging.default_notification_icon"
-                android:resource="@drawable/ic_notification" />
+                android:resource="@drawable/ic_notification"/>
         <!--
              Set color used with incoming notification messages. This is used when no color is set for the incoming
              notification message. See README(https://goo.gl/6BKBk7) for more.
         -->
         <meta-data
                 android:name="com.google.firebase.messaging.default_notification_color"
-                android:resource="@color/colorPrimary" />
+                android:resource="@color/colorPrimary"/>
 
         <activity
                 android:name=".SplashActivity"
                 android:theme="@style/SplashTheme">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.VIEW"/>
 
-                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.BROWSABLE"/>
                 <!-- Accepts URIs that begin with "http://www.example.com/gizmos” -->
                 <data
-                    android:host="gulliver.ga"
-                    android:scheme="http" />
+                        android:host="gulliver.ga"
+                        android:scheme="http"/>
                 <!-- note that the leading "/" is required for pathPrefix -->
             </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
 
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity" />
+        <activity android:name=".MainActivity"/>
         <activity
                 android:name=".SignInActivity"
-                android:theme="@style/SignInTheme" />
+                android:theme="@style/SignInTheme"/>
         <activity android:name=".DirectMessagesActivity"/>
         <activity android:name=".DirectMessagesLogActivity">
             <intent-filter>
-                <action android:name="DIRECT_MESSAGES_LOG_ACTIVITY" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="DIRECT_MESSAGES_LOG_ACTIVITY"/>
+
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
 
@@ -59,9 +60,12 @@
                 android:name=".services.MessageAlertService"
                 android:exported="false">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
+
+        <activity android:name=".AddCityActivity">
+        </activity>
     </application>
 
 </manifest>

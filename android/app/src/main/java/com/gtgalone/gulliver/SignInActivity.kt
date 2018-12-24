@@ -19,6 +19,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.iid.FirebaseInstanceId
 import com.gtgalone.gulliver.models.FavoriteServer
+import com.gtgalone.gulliver.models.Server
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
 class SignInActivity : AppCompatActivity() {
@@ -110,7 +111,7 @@ class SignInActivity : AppCompatActivity() {
     FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
       val token = it.result?.token ?: ""
 
-      val currentServer = intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER)
+      val currentServer = intent.getParcelableExtra<Server>(SplashActivity.CURRENT_SERVER)
       val currentChannel = intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
       ref.limitToFirst(1)
         .addListenerForSingleValueEvent(object: ValueEventListener {
@@ -121,38 +122,47 @@ class SignInActivity : AppCompatActivity() {
                 tokenRef.setValue(true)
 
                 val favoriteServerRef = FirebaseDatabase.getInstance().getReference("/users/$uid/servers")
-                favoriteServerRef.orderByChild("serverId").equalTo(currentServer.serverId)
+                favoriteServerRef.orderByChild("serverId").equalTo(currentServer.id)
                   .addListenerForSingleValueEvent(object: ValueEventListener {
                     override fun onDataChange(p0: DataSnapshot) {
                       if (!p0.hasChildren()) {
                         val pushFavoriteServerRef = favoriteServerRef.push()
-                        pushFavoriteServerRef.setValue(FavoriteServer(pushFavoriteServerRef.key, currentServer.serverId, currentServer.serverDisplayName))
+                        pushFavoriteServerRef.setValue(FavoriteServer(
+                          pushFavoriteServerRef.key,
+                          currentServer.id,
+                          currentServer.countryCode,
+                          currentServer.adminArea,
+                          currentServer.locality
+                        ))
 
                         changeAcitivity()
                       } else {
                         changeAcitivity()
                       }
                     }
-
-                    override fun onCancelled(p0: DatabaseError) {
-                    }
+                    override fun onCancelled(p0: DatabaseError) {}
                   })
             } else {
-              ref.setValue(User(uid, displayName, email, photoUrl, currentServer.serverId!!, currentChannel[0])).addOnCompleteListener {
+              ref.setValue(User(uid, displayName, email, photoUrl, currentServer.id, currentChannel[0])).addOnCompleteListener {
                 val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
                 tokenRef.setValue(true)
 
                 val favoriteServerRef = FirebaseDatabase.getInstance().getReference("/users/$uid/servers/").push()
-                Log.d("test", currentServer.serverId + currentServer.serverDisplayName)
+                Log.d("test", currentServer.id)
 
-                favoriteServerRef.setValue(FavoriteServer(favoriteServerRef.key!!, currentServer.serverId, currentServer.serverDisplayName))
+                favoriteServerRef.setValue(FavoriteServer(
+                  favoriteServerRef.key,
+                  currentServer.id,
+                  currentServer.countryCode,
+                  currentServer.adminArea,
+                  currentServer.locality
+                ))
 
                 changeAcitivity()
               }
             }
           }
-          override fun onCancelled(p0: DatabaseError) {
-          }
+          override fun onCancelled(p0: DatabaseError) {}
         })
     }
   }

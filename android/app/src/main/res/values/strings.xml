@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Gulliver</string>
-    <string name="latitude_label">latitude:</string>
-    <string name="longitude_label">longitude:</string>
-    <string name="location_label">location:</string>
     <string name="no_location_detected">no location detected</string>
     <string name="main_activity_container">main activity</string>
     <string name="permission_rationale">permission rationale</string>
@@ -14,8 +11,8 @@
     <string name="search">Search</string>
     <string name="sign_out">Sign Out</string>
     <string name="account_menu">Account Menu</string>
-    <string name="channel_area1">%1$s (%2$s, %3$s)</string>
-    <string name="channel_area2">%1$s (%2$s)</string>
+    <string name="add_city">Add City</string>
+    <string name="servers_row_admin_country">%1$s, %2$s</string>
     <string name="channel"># %1$s</string>
     <string name='enter_message'>Enter Message</string>
     <string name="google_signin_button">Sign In with Google</string>

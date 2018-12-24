@@ -121,21 +121,9 @@ class SplashActivity : AppCompatActivity() {
         locationManager.removeUpdates(this)
       }
     }
-
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-      Log.d(TAG, "status")
-
-    }
-
-    override fun onProviderDisabled(provider: String?) {
-      Log.d(TAG, "pro dis")
-
-    }
-
-    override fun onProviderEnabled(provider: String?) {
-      Log.d(TAG, "pro ena")
-
-    }
+    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+    override fun onProviderDisabled(provider: String?) {}
+    override fun onProviderEnabled(provider: String?) {}
   }
   /**
    * Provides a simple way of getting a device's location and is well suited for
@@ -166,26 +154,19 @@ class SplashActivity : AppCompatActivity() {
       val latitude = location.latitude
       val longitude = location.longitude
 
-      val locationInformation = geo.getFromLocation(37.503942, 127.050136, 10)[0]
+      val locationInformation = geo.getFromLocation(36.505016, 127.264913, 10)[0]
 
       val countryCode = locationInformation.countryCode
       val adminArea = locationInformation.adminArea
       val locality = locationInformation.locality ?: locationInformation.adminArea
 
-
       Log.d("test", locationInformation.toString())
-      val displayName: String
-      if (adminArea == locality) {
-        displayName = getString(R.string.channel_area2, locality, countryCode)
-      } else {
-        displayName = getString(R.string.channel_area1, locality, adminArea, countryCode)
-      }
 
       val name = countryCode.replace(" ", "").toLowerCase() + "-" +
           adminArea.replace(" ", "").toLowerCase() + "-" +
           locality.replace(" ", "").toLowerCase()
 
-      getServer(Server("", name, displayName, countryCode, adminArea, locality))
+      getServer(Server("", name, countryCode, adminArea, locality))
     }
   }
 
@@ -195,7 +176,7 @@ class SplashActivity : AppCompatActivity() {
       override fun onDataChange(p0: DataSnapshot) {
         if (!p0.hasChildren()) {
           val serverRef = databaseReference.push()
-          serverRef.setValue(Server(serverRef.key!!, server.name, server.displayName, server.countryCode, server.adminArea, server.locality))
+          serverRef.setValue(Server(serverRef.key!!, server.name, server.countryCode, server.adminArea, server.locality))
             .addOnCompleteListener {
               val channels = arrayListOf("general", "trade")
               for (channel in channels) {
@@ -215,17 +196,27 @@ class SplashActivity : AppCompatActivity() {
                         override fun onDataChange(p0: DataSnapshot) {
                           if (!p0.hasChildren()) {
                             val pushFavoriteServerRef = favoriteServerRef.push()
-                            pushFavoriteServerRef.setValue(FavoriteServer(pushFavoriteServerRef.key, serverRef.key, server.displayName))
+                            pushFavoriteServerRef.setValue(FavoriteServer(
+                              pushFavoriteServerRef.key,
+                              serverRef.key,
+                              server.countryCode,
+                              server.adminArea,
+                              server.locality
+                            ))
                             favoriteServerRef.removeEventListener(this)
                           }
                         }
-
-                        override fun onCancelled(p0: DatabaseError) {
-                        }
+                        override fun onCancelled(p0: DatabaseError) {}
                       })
                   }
 
-                  nextIntent.putExtra(CURRENT_SERVER, FavoriteServer(null, serverRef.key!!, server.displayName))
+                  nextIntent.putExtra(CURRENT_SERVER, Server(
+                    serverRef.key,
+                    server.name,
+                    server.countryCode,
+                    server.adminArea,
+                    server.locality
+                  ))
                   nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channelRef.key!!, channel))
 
                   changeActivity()
@@ -253,29 +244,35 @@ class SplashActivity : AppCompatActivity() {
                       override fun onDataChange(p0: DataSnapshot) {
                         if (!p0.hasChildren()) {
                           val pushFavoriteServerRef = favoriteServerRef.push()
-                          pushFavoriteServerRef.setValue(FavoriteServer(pushFavoriteServerRef.key, serverInfo.id, serverInfo.displayName))
+                          pushFavoriteServerRef.setValue(FavoriteServer(
+                            pushFavoriteServerRef.key,
+                            serverInfo.id,
+                            serverInfo.countryCode,
+                            serverInfo.adminArea,
+                            serverInfo.locality
+                          ))
                         }
                       }
-
-                      override fun onCancelled(p0: DatabaseError) {
-                      }
+                      override fun onCancelled(p0: DatabaseError) {}
                     })
                 }
-                nextIntent.putExtra(CURRENT_SERVER, FavoriteServer(null, serverInfo.id, server.displayName))
+                nextIntent.putExtra(CURRENT_SERVER, Server(
+                  serverInfo.id,
+                  serverInfo.name,
+                  serverInfo.countryCode,
+                  serverInfo.adminArea,
+                  serverInfo.locality
+                ))
                 nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channel.id, channel.name))
 
                 changeActivity()
               }
-
-              override fun onCancelled(p0: DatabaseError) {
-              }
+              override fun onCancelled(p0: DatabaseError) {}
             })
           }
         }
       }
-
-      override fun onCancelled(p0: DatabaseError) {
-      }
+      override fun onCancelled(p0: DatabaseError) {}
     })
   }
 

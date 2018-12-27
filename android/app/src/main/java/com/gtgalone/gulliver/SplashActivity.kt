@@ -140,7 +140,7 @@ class SplashActivity : AppCompatActivity() {
     val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
     if (location == null) {
       Log.d(TAG, "location null")
-      changeActivityWithLocation(Location(""))
+//      changeActivityWithLocation(Location(""))
       locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000L, 0F, locationListener)
     } else {
       changeActivityWithLocation(location)
@@ -154,7 +154,7 @@ class SplashActivity : AppCompatActivity() {
       val latitude = location.latitude
       val longitude = location.longitude
 
-      val locationInformation = geo.getFromLocation(36.505016, 127.264913, 10)[0]
+      val locationInformation = geo.getFromLocation(latitude, longitude, 10)[0]
 
       val countryCode = locationInformation.countryCode
       val adminArea = locationInformation.adminArea

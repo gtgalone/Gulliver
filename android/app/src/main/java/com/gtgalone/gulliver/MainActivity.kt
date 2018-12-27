@@ -217,9 +217,9 @@ class MainActivity : AppCompatActivity() {
         currentUser = p0.getValue(User::class.java)
         Picasso.get().load(currentUser?.photoUrl).into(activity_main_left_drawer_circle_image_view)
         activity_main_left_drawer_text_view.text = currentUser?.displayName
+        fetchServers()
         setTitleForActionBar()
         listenForChatLog()
-        fetchServers()
       }
       override fun onCancelled(p0: DatabaseError) {}
     })

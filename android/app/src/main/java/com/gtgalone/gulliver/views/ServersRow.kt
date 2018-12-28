@@ -22,7 +22,6 @@ class ServersRow(val favoriteServer: FavoriteServer, val user: User) : Item<View
           favoriteServer.countryCode
         )
       }
-
     }
 
     if (favoriteServer.serverId == user.currentServer) {

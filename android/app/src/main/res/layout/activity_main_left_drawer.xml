@@ -69,28 +69,35 @@
             android:layout_gravity="start"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
     <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            app:layout_constraintEnd_toEndOf="parent"
             android:id="@+id/activity_main_left_drawer_add_city_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/background"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            android:layout_height="wrap_content">
+            android:layout_marginTop="1dp">
         <ImageView
+                android:id="@+id/activity_main_left_drawer_add_city_image_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:contentDescription="@string/add_city" app:srcCompat="@drawable/ic_add_circle_outline"
-                android:id="@+id/activity_main_left_drawer_add_city_image_view"
+                android:contentDescription="@string/add_city"
+                android:layout_marginTop="8dp"
+                app:srcCompat="@drawable/ic_add_circle_outline"
                 app:layout_constraintBottom_toTopOf="@+id/activity_main_left_drawer_add_city_text_view"
                 app:layout_constraintStart_toStartOf="@+id/activity_main_left_drawer_add_city_text_view"
                 app:layout_constraintEnd_toEndOf="@+id/activity_main_left_drawer_add_city_text_view"
-                android:layout_marginTop="8dp" app:layout_constraintTop_toTopOf="parent"/>
+                app:layout_constraintTop_toTopOf="parent"/>
         <TextView
+                android:id="@+id/activity_main_left_drawer_add_city_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/add_city"
-                android:id="@+id/activity_main_left_drawer_add_city_text_view"
-                android:alpha="0.8" android:textSize="12sp"
+                android:textSize="12sp"
+                android:textColor="@color/colorWhite"
+                android:layout_marginBottom="8dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" android:layout_marginBottom="8dp"/>
+                app:layout_constraintBottom_toBottomOf="parent" android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

@@ -2,6 +2,7 @@ package com.gtgalone.gulliver
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -11,6 +12,7 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
@@ -24,6 +26,7 @@ import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main_left_drawer.*
+import kotlinx.android.synthetic.main.activity_main_servers_row.view.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import org.jetbrains.anko.doAsync
@@ -266,7 +269,7 @@ class MainActivity : AppCompatActivity() {
               val serverId = (item as ServersRow).favoriteServer.serverId
 
               if (serverId == currentUser?.currentServer) return@setOnItemClickListener
-
+              view.activity_main_servers_row_layout.setBackgroundColor(Color.LTGRAY)
 
               doAsync {
                 fetchUsers(serverId)
@@ -290,8 +293,8 @@ class MainActivity : AppCompatActivity() {
             }
 
           }
-
           recycler_view_servers.adapter = adapterServer
+          doAsync { activity_main_layout.closeDrawer(GravityCompat.START) }
         }
         override fun onCancelled(p0: DatabaseError) {}
       })

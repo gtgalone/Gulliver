@@ -154,7 +154,7 @@ class SplashActivity : AppCompatActivity() {
       val latitude = location.latitude
       val longitude = location.longitude
 
-      val locationInformation = geo.getFromLocation(37.519677, 127.037222, 10)[0]
+      val locationInformation = geo.getFromLocation(51.496326, -0.114733, 10)[0]
 
       val countryCode = locationInformation.countryCode
       val adminArea = locationInformation.adminArea
@@ -229,8 +229,6 @@ class SplashActivity : AppCompatActivity() {
             val channelRef = FirebaseDatabase.getInstance().getReference("/cities/${cityInfo.id}/channels").limitToFirst(1)
             channelRef.addListenerForSingleValueEvent(object: ValueEventListener {
               override fun onDataChange(p0: DataSnapshot) {
-                Log.d("test", "in channel")
-
                 val channel = p0.children.first().getValue(Channel::class.java) ?: return
 
                 val uid = FirebaseAuth.getInstance().uid

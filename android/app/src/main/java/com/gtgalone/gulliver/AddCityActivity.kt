@@ -4,13 +4,13 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
+import com.gtgalone.gulliver.models.Channel
 import com.gtgalone.gulliver.models.City
+import com.gtgalone.gulliver.models.FavoriteCity
 import com.gtgalone.gulliver.views.CitiesRow
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
@@ -33,12 +33,25 @@ class AddCityActivity : AppCompatActivity() {
     supportActionBar?.setCustomView(R.layout.custom_view_search)
     custom_view_search.hint = getString(R.string.search_city)
 
-    fetchcities()
-
+    fetchCities()
   }
 
-  private fun fetchcities() {
-    FirebaseDatabase.getInstance().getReference("/cities/")
+  private fun fetchCities(query: String? = null) {
+    var cityRef = FirebaseDatabase.getInstance().getReference("/cities/").orderByChild("locality")
+
+    if (query != null) {
+      var q: String? = ""
+      query.split(" ").forEachIndexed { index, s ->
+        if (index != 0) {
+          q = q + " " + s.capitalize()
+        } else {
+          q += s.capitalize()
+        }
+      }
+      cityRef = cityRef.startAt(q)
+    }
+
+    cityRef
       .addListenerForSingleValueEvent(object: ValueEventListener {
 
         override fun onDataChange(p0: DataSnapshot) {
@@ -47,6 +60,29 @@ class AddCityActivity : AppCompatActivity() {
           p0.children.forEach {
             val city = it.getValue(City::class.java) ?: return
             adapter.add(CitiesRow(city))
+            adapter.setOnItemClickListener { item, view ->
+              val citiesRow = item as CitiesRow
+              val currentUserRef = FirebaseDatabase.getInstance().getReference("/users/${MainActivity.currentUser?.uid}")
+              currentUserRef.child("cities")
+                .orderByChild("locality").equalTo(citiesRow.city.locality)
+                .addListenerForSingleValueEvent(object: ValueEventListener {
+                  override fun onDataChange(userCitiesDataSnapshot: DataSnapshot) {
+                    if (!userCitiesDataSnapshot.hasChildren()) {
+                      val pushCityRef = currentUserRef.child("cities").push()
+                      pushCityRef.setValue(FavoriteCity(
+                        pushCityRef.key,
+                        citiesRow.city.id,
+                        citiesRow.city.countryCode,
+                        citiesRow.city.adminArea,
+                        citiesRow.city.locality
+                      )).addOnCompleteListener {
+                        finish()
+                      }
+                    }
+                  }
+                  override fun onCancelled(p0: DatabaseError) {}
+                })
+            }
           }
           recycler_view_add_city.adapter = adapter
 
@@ -65,8 +101,10 @@ class AddCityActivity : AppCompatActivity() {
     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
       if (s.isNullOrBlank()) {
         menuAddCity?.setGroupVisible(0, false)
+        fetchCities()
       } else {
         menuAddCity?.setGroupVisible(0, true)
+        if (s.length >= 2) fetchCities(s.toString())
       }
     }
     override fun afterTextChanged(s: Editable?) {}

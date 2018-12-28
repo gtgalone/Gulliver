@@ -4,6 +4,6 @@ import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize
 
 @Parcelize
-class City(val id: String?, val name: String, val countryCode: String, val adminArea: String, val locality: String): Parcelable {
+class City(val id: String?, val name: String, val countryCode: String, val adminArea: String, val locality: String, val cityId: String? = null): Parcelable {
   constructor() : this("","", "","", "")
 }

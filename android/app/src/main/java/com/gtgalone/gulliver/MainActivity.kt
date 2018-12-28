@@ -142,12 +142,10 @@ class MainActivity : AppCompatActivity() {
 
   private val chatLogChildEventListener = object: ChildEventListener {
     override fun onChildAdded(p0: DataSnapshot, p1: String?) {
-      Log.d("test", "child add")
       val chatLog = p0.getValue(ChatLog::class.java) ?: return
 
       when(chatLog.fromId) {
         currentUser?.uid -> {
-          Log.d("test", "me")
           adapter.add(
             DirectMessagesLogTo(
               chatLog.text,
@@ -157,7 +155,6 @@ class MainActivity : AppCompatActivity() {
           )
         }
         else -> {
-          Log.d("test", "others")
           adapter.add(
             DirectMessagesLogFrom(
               chatLog.text,
@@ -254,46 +251,52 @@ class MainActivity : AppCompatActivity() {
 
   private fun fetchCities() {
     Log.d("test", "fetchcities ${currentUser?.uid}")
+    val adapterCity = GroupAdapter<ViewHolder>()
+    val mKeys = mutableListOf<String>()
 
     FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/cities")
-      .addListenerForSingleValueEvent(object: ValueEventListener {
-        override fun onDataChange(p0: DataSnapshot) {
-          val adapterCity = GroupAdapter<ViewHolder>()
-          recycler_view_cities.adapter = adapterCity
-          p0.children.forEach {
-            val city = it.getValue(City::class.java) ?: return
-            adapterCity.add(CitiesRow(city, currentUser!!))
+      .addChildEventListener(object: ChildEventListener {
+        override fun onChildAdded(p0: DataSnapshot, p1: String?) {
 
-            adapterCity.setOnItemClickListener { item, view ->
-              val cityId = (item as CitiesRow).city.id
+          val city = p0.getValue(City::class.java) ?: return
+          adapterCity.add(CitiesRow(city, currentUser))
+          mKeys.add(p0.key!!)
+          adapterCity.setOnItemClickListener { item, view ->
+            val cityId = (item as CitiesRow).city.cityId
 
-              if (cityId == currentUser?.currentCity) return@setOnItemClickListener
-              view.activity_main_cities_row_layout.setBackgroundColor(Color.LTGRAY)
+            if (cityId == currentUser?.currentCity) return@setOnItemClickListener
+            view.activity_main_cities_row_layout.setBackgroundColor(Color.LTGRAY)
 
-              doAsync {
-                fetchUsers(cityId)
+            doAsync {
+              fetchUsers(cityId)
 
-                FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentCities")
-                  .setValue(cityId)
-              }
-
-              FirebaseDatabase.getInstance().getReference("/cities/$cityId/channels").limitToFirst(1)
-                .addListenerForSingleValueEvent(object: ValueEventListener {
-                  override fun onDataChange(channels: DataSnapshot) {
-                    FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentChannel")
-                      .setValue(channels.children.first().getValue(Channel::class.java)?.id)
-                      .addOnCompleteListener {
-                        adapter.clear()
-                        fetchCurrentUser()
-                      }
-                  }
-                  override fun onCancelled(p0: DatabaseError) {}
-                })
+              FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentCity")
+                .setValue(cityId)
             }
 
+            FirebaseDatabase.getInstance().getReference("/cities/$cityId/channels").limitToFirst(1)
+              .addListenerForSingleValueEvent(object: ValueEventListener {
+                override fun onDataChange(channels: DataSnapshot) {
+                  FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentChannel")
+                    .setValue(channels.children.first().getValue(Channel::class.java)?.id)
+                    .addOnCompleteListener {
+                      adapter.clear()
+                      fetchCurrentUser()
+                    }
+                }
+                override fun onCancelled(p0: DatabaseError) {}
+              })
+            doAsync { activity_main_layout.closeDrawer(GravityCompat.START) }
           }
+
           recycler_view_cities.adapter = adapterCity
-          doAsync { activity_main_layout.closeDrawer(GravityCompat.START) }
+        }
+        override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
+        override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
+        override fun onChildRemoved(p0: DataSnapshot) {
+          val index = mKeys.indexOf(p0.key!!)
+          adapterCity.remove(adapterCity.getItem(index))
+          mKeys.removeAt(index)
         }
         override fun onCancelled(p0: DatabaseError) {}
       })

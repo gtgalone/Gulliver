@@ -1,7 +1,10 @@
 package com.gtgalone.gulliver.views
 
 import android.os.Build
+import android.util.Log
+import android.view.View
 import androidx.core.content.ContextCompat
+import com.google.firebase.database.FirebaseDatabase
 import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.models.City
 import com.gtgalone.gulliver.models.User
@@ -25,7 +28,11 @@ class CitiesRow(val city: City, val user: User? = null) : Item<ViewHolder>() {
     }
 
     if (user == null) return
-    if (city.id == user.currentCity) {
+    viewHolder.itemView.activity_main_cities_row_delete.setOnClickListener {
+      Log.d("test", "/users/${user.uid}/cities/${city.id}")
+      FirebaseDatabase.getInstance().getReference("/users/${user.uid}/cities/${city.id}").removeValue()
+    }
+    if (city.cityId == user.currentCity) {
       viewHolder.itemView.apply {
         activity_main_cities_row_locality
           .setTextColor(ContextCompat.getColor(viewHolder.itemView.context, R.color.colorWhite))
@@ -39,7 +46,10 @@ class CitiesRow(val city: City, val user: User? = null) : Item<ViewHolder>() {
         viewHolder.itemView.activity_main_cities_row_layout
           .background = ContextCompat.getDrawable(viewHolder.itemView.context, R.drawable.background)
       }
+    } else {
+      viewHolder.itemView.activity_main_cities_row_delete.visibility = View.VISIBLE
     }
+
   }
 
   override fun getLayout(): Int {

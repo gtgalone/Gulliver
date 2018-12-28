@@ -9,10 +9,12 @@
     <string name="people">People</string>
     <string name="direct_message">Direct Message</string>
     <string name="search">Search</string>
+    <string name="search_city">Search City&#8230;</string>
     <string name="sign_out">Sign Out</string>
     <string name="account_menu">Account Menu</string>
     <string name="add_city">Add City</string>
-    <string name="servers_row_admin_country">%1$s, %2$s</string>
+    <string name="clear">Clear</string>
+    <string name="cities_row_admin_country">%1$s, %2$s</string>
     <string name="channel"># %1$s</string>
     <string name='enter_message'>Enter Message</string>
     <string name="google_signin_button">Sign In with Google</string>

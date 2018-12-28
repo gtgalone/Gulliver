@@ -18,8 +18,8 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.iid.FirebaseInstanceId
-import com.gtgalone.gulliver.models.FavoriteServer
-import com.gtgalone.gulliver.models.Server
+import com.gtgalone.gulliver.models.FavoriteCity
+import com.gtgalone.gulliver.models.City
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
 class SignInActivity : AppCompatActivity() {
@@ -59,8 +59,8 @@ class SignInActivity : AppCompatActivity() {
     val nextIntent = Intent(this@SignInActivity, MainActivity::class.java)
 
     nextIntent.putExtra(
-      SplashActivity.CURRENT_SERVER,
-      intent.getParcelableExtra<FavoriteServer>(SplashActivity.CURRENT_SERVER)
+      SplashActivity.CURRENT_CITY,
+      intent.getParcelableExtra<FavoriteCity>(SplashActivity.CURRENT_CITY)
     )
 
     nextIntent.putExtra(
@@ -111,7 +111,7 @@ class SignInActivity : AppCompatActivity() {
     FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
       val token = it.result?.token ?: ""
 
-      val currentServer = intent.getParcelableExtra<Server>(SplashActivity.CURRENT_SERVER)
+      val currentCity = intent.getParcelableExtra<City>(SplashActivity.CURRENT_CITY)
       val currentChannel = intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
       ref.limitToFirst(1)
         .addListenerForSingleValueEvent(object: ValueEventListener {
@@ -121,18 +121,18 @@ class SignInActivity : AppCompatActivity() {
                 val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
                 tokenRef.setValue(true)
 
-                val favoriteServerRef = FirebaseDatabase.getInstance().getReference("/users/$uid/servers")
-                favoriteServerRef.orderByChild("serverId").equalTo(currentServer.id)
+                val favoriteCityRef = FirebaseDatabase.getInstance().getReference("/users/$uid/cities")
+                favoriteCityRef.orderByChild("cityId").equalTo(currentCity.id)
                   .addListenerForSingleValueEvent(object: ValueEventListener {
                     override fun onDataChange(p0: DataSnapshot) {
                       if (!p0.hasChildren()) {
-                        val pushFavoriteServerRef = favoriteServerRef.push()
-                        pushFavoriteServerRef.setValue(FavoriteServer(
-                          pushFavoriteServerRef.key,
-                          currentServer.id,
-                          currentServer.countryCode,
-                          currentServer.adminArea,
-                          currentServer.locality
+                        val pushFavoriteCityRef = favoriteCityRef.push()
+                        pushFavoriteCityRef.setValue(FavoriteCity(
+                          pushFavoriteCityRef.key,
+                          currentCity.id,
+                          currentCity.countryCode,
+                          currentCity.adminArea,
+                          currentCity.locality
                         ))
 
                         changeAcitivity()
@@ -143,19 +143,19 @@ class SignInActivity : AppCompatActivity() {
                     override fun onCancelled(p0: DatabaseError) {}
                   })
             } else {
-              ref.setValue(User(uid, displayName, email, photoUrl, currentServer.id, currentChannel[0])).addOnCompleteListener {
+              ref.setValue(User(uid, displayName, email, photoUrl, currentCity.id, currentChannel[0])).addOnCompleteListener {
                 val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
                 tokenRef.setValue(true)
 
-                val favoriteServerRef = FirebaseDatabase.getInstance().getReference("/users/$uid/servers/").push()
-                Log.d("test", currentServer.id)
+                val favoriteCityRef = FirebaseDatabase.getInstance().getReference("/users/$uid/cities/").push()
+                Log.d("test", currentCity.id)
 
-                favoriteServerRef.setValue(FavoriteServer(
-                  favoriteServerRef.key,
-                  currentServer.id,
-                  currentServer.countryCode,
-                  currentServer.adminArea,
-                  currentServer.locality
+                favoriteCityRef.setValue(FavoriteCity(
+                  favoriteCityRef.key,
+                  currentCity.id,
+                  currentCity.countryCode,
+                  currentCity.adminArea,
+                  currentCity.locality
                 ))
 
                 changeAcitivity()

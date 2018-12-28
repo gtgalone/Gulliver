@@ -25,14 +25,14 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.gtgalone.gulliver.models.Channel
-import com.gtgalone.gulliver.models.FavoriteServer
-import com.gtgalone.gulliver.models.Server
+import com.gtgalone.gulliver.models.FavoriteCity
+import com.gtgalone.gulliver.models.City
 import org.jetbrains.anko.doAsync
 
 class SplashActivity : AppCompatActivity() {
   companion object {
     const val TAG = "SplashActivity"
-    const val CURRENT_SERVER = "CurrentServer"
+    const val CURRENT_CITY = "CurrentCity"
     const val CURRENT_CHANNEL = "CurrentChannel"
     const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
   }
@@ -107,7 +107,7 @@ class SplashActivity : AppCompatActivity() {
       nextIntent = Intent(this@SplashActivity, MainActivity::class.java)
     }
 
-    databaseReference = FirebaseDatabase.getInstance().getReference("/servers")
+    databaseReference = FirebaseDatabase.getInstance().getReference("/cities")
     locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
   }
 
@@ -154,7 +154,7 @@ class SplashActivity : AppCompatActivity() {
       val latitude = location.latitude
       val longitude = location.longitude
 
-      val locationInformation = geo.getFromLocation(36.505016, 127.264913, 10)[0]
+      val locationInformation = geo.getFromLocation(37.519677, 127.037222, 10)[0]
 
       val countryCode = locationInformation.countryCode
       val adminArea = locationInformation.adminArea
@@ -166,56 +166,56 @@ class SplashActivity : AppCompatActivity() {
           adminArea.replace(" ", "").toLowerCase() + "-" +
           locality.replace(" ", "").toLowerCase()
 
-      getServer(Server("", name, countryCode, adminArea, locality))
+      getCity(City("", name, countryCode, adminArea, locality))
     }
   }
 
-  private fun getServer(server: Server) {
-    val serverNameRef = databaseReference.orderByChild("name").equalTo(server.name)
-    serverNameRef.addListenerForSingleValueEvent(object: ValueEventListener {
+  private fun getCity(city: City) {
+    val cityNameRef = databaseReference.orderByChild("name").equalTo(city.name)
+    cityNameRef.addListenerForSingleValueEvent(object: ValueEventListener {
       override fun onDataChange(p0: DataSnapshot) {
         if (!p0.hasChildren()) {
-          val serverRef = databaseReference.push()
-          serverRef.setValue(Server(serverRef.key!!, server.name, server.countryCode, server.adminArea, server.locality))
+          val cityRef = databaseReference.push()
+          cityRef.setValue(City(cityRef.key!!, city.name, city.countryCode, city.adminArea, city.locality))
             .addOnCompleteListener {
               val channels = arrayListOf("general", "trade")
               for (channel in channels) {
-                val channelRef = FirebaseDatabase.getInstance().getReference("/servers/${serverRef.key}/channels").push()
+                val channelRef = FirebaseDatabase.getInstance().getReference("/cities/${cityRef.key}/channels").push()
                 channelRef.setValue(Channel(channelRef.key!!, channel))
 
                 if (channel == "general") {
 
                   val uid = FirebaseAuth.getInstance().uid
                   if (uid != null) {
-                    FirebaseDatabase.getInstance().getReference("/users/$uid/currentServer").setValue(serverRef.key)
+                    FirebaseDatabase.getInstance().getReference("/users/$uid/currentCity").setValue(cityRef.key)
                     FirebaseDatabase.getInstance().getReference("/users/$uid/currentChannel").setValue(channelRef.key)
 
-                    val favoriteServerRef = FirebaseDatabase.getInstance().getReference("/users/$uid/servers")
-                    favoriteServerRef.orderByChild("serverId").equalTo(serverRef.key)
+                    val favoriteCityRef = FirebaseDatabase.getInstance().getReference("/users/$uid/cities")
+                    favoriteCityRef.orderByChild("cityId").equalTo(cityRef.key)
                       .addListenerForSingleValueEvent(object: ValueEventListener {
                         override fun onDataChange(p0: DataSnapshot) {
                           if (!p0.hasChildren()) {
-                            val pushFavoriteServerRef = favoriteServerRef.push()
-                            pushFavoriteServerRef.setValue(FavoriteServer(
-                              pushFavoriteServerRef.key,
-                              serverRef.key,
-                              server.countryCode,
-                              server.adminArea,
-                              server.locality
+                            val pushFavoriteCityRef = favoriteCityRef.push()
+                            pushFavoriteCityRef.setValue(FavoriteCity(
+                              pushFavoriteCityRef.key,
+                              cityRef.key,
+                              city.countryCode,
+                              city.adminArea,
+                              city.locality
                             ))
-                            favoriteServerRef.removeEventListener(this)
+                            favoriteCityRef.removeEventListener(this)
                           }
                         }
                         override fun onCancelled(p0: DatabaseError) {}
                       })
                   }
 
-                  nextIntent.putExtra(CURRENT_SERVER, Server(
-                    serverRef.key,
-                    server.name,
-                    server.countryCode,
-                    server.adminArea,
-                    server.locality
+                  nextIntent.putExtra(CURRENT_CITY, City(
+                    cityRef.key,
+                    city.name,
+                    city.countryCode,
+                    city.adminArea,
+                    city.locality
                   ))
                   nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channelRef.key!!, channel))
 
@@ -225,8 +225,8 @@ class SplashActivity : AppCompatActivity() {
             }
         } else {
           p0.children.forEach {
-            val serverInfo = it.getValue(Server::class.java) ?: return
-            val channelRef = FirebaseDatabase.getInstance().getReference("/servers/${serverInfo.id}/channels").limitToFirst(1)
+            val cityInfo = it.getValue(City::class.java) ?: return
+            val channelRef = FirebaseDatabase.getInstance().getReference("/cities/${cityInfo.id}/channels").limitToFirst(1)
             channelRef.addListenerForSingleValueEvent(object: ValueEventListener {
               override fun onDataChange(p0: DataSnapshot) {
                 Log.d("test", "in channel")
@@ -235,33 +235,33 @@ class SplashActivity : AppCompatActivity() {
 
                 val uid = FirebaseAuth.getInstance().uid
                 if (uid != null) {
-                  FirebaseDatabase.getInstance().getReference("/users/$uid/currentServer").setValue(serverInfo.id)
+                  FirebaseDatabase.getInstance().getReference("/users/$uid/currentCity").setValue(cityInfo.id)
                   FirebaseDatabase.getInstance().getReference("/users/$uid/currentChannel").setValue(channel.id)
 
-                  val favoriteServerRef = FirebaseDatabase.getInstance().getReference("/users/$uid/servers")
-                  favoriteServerRef.orderByChild("serverId").equalTo(serverInfo.id)
+                  val favoriteCityRef = FirebaseDatabase.getInstance().getReference("/users/$uid/cities")
+                  favoriteCityRef.orderByChild("cityId").equalTo(cityInfo.id)
                     .addListenerForSingleValueEvent(object: ValueEventListener {
                       override fun onDataChange(p0: DataSnapshot) {
                         if (!p0.hasChildren()) {
-                          val pushFavoriteServerRef = favoriteServerRef.push()
-                          pushFavoriteServerRef.setValue(FavoriteServer(
-                            pushFavoriteServerRef.key,
-                            serverInfo.id,
-                            serverInfo.countryCode,
-                            serverInfo.adminArea,
-                            serverInfo.locality
+                          val pushFavoriteCityRef = favoriteCityRef.push()
+                          pushFavoriteCityRef.setValue(FavoriteCity(
+                            pushFavoriteCityRef.key,
+                            cityInfo.id,
+                            cityInfo.countryCode,
+                            cityInfo.adminArea,
+                            cityInfo.locality
                           ))
                         }
                       }
                       override fun onCancelled(p0: DatabaseError) {}
                     })
                 }
-                nextIntent.putExtra(CURRENT_SERVER, Server(
-                  serverInfo.id,
-                  serverInfo.name,
-                  serverInfo.countryCode,
-                  serverInfo.adminArea,
-                  serverInfo.locality
+                nextIntent.putExtra(CURRENT_CITY, City(
+                  cityInfo.id,
+                  cityInfo.name,
+                  cityInfo.countryCode,
+                  cityInfo.adminArea,
+                  cityInfo.locality
                 ))
                 nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channel.id, channel.name))
 

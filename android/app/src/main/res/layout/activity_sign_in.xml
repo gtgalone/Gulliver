@@ -4,7 +4,7 @@
                                                    xmlns:tools="http://schemas.android.com/tools"
                                                    android:layout_width="match_parent"
                                                    android:layout_height="match_parent"
-                                                   android:background="@color/colorPrimary">
+                                                   android:background="@drawable/background">
 
     <Button app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -15,7 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="54dp"
             android:textSize="18sp"
-            android:background="@drawable/rounded_button"
+            android:background="@drawable/rounded_button_secondary"
             android:paddingLeft="32dp"
             android:paddingRight="32dp"
             android:paddingTop="15dp"

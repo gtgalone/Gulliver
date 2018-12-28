@@ -12,7 +12,6 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
@@ -20,13 +19,13 @@ import com.gtgalone.gulliver.models.*
 import com.gtgalone.gulliver.views.DirectMessagesLogFrom
 import com.gtgalone.gulliver.views.DirectMessagesLogTo
 import com.gtgalone.gulliver.views.PeopleRow
-import com.gtgalone.gulliver.views.ServersRow
+import com.gtgalone.gulliver.views.CitiesRow
 import com.squareup.picasso.Picasso
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main_left_drawer.*
-import kotlinx.android.synthetic.main.activity_main_servers_row.view.*
+import kotlinx.android.synthetic.main.activity_main_cities_row.view.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import org.jetbrains.anko.doAsync
@@ -40,14 +39,14 @@ class MainActivity : AppCompatActivity() {
     setContentView(R.layout.activity_main)
     setSupportActionBar(toolbar)
 
-    val currentServer = intent.getParcelableExtra<Server>(SplashActivity.CURRENT_SERVER)
-    setTitleForActionBar(currentServer)
+    val currentCity = intent.getParcelableExtra<City>(SplashActivity.CURRENT_CITY)
+    setTitleForActionBar(currentCity)
 
     recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
     recycler_view_main_activity_log.adapter = adapter
 
     fetchCurrentUser()
-    fetchUsers(currentServer.id)
+    fetchUsers(currentCity.id)
 
     val toggle = object: ActionBarDrawerToggle(
       this,
@@ -97,7 +96,7 @@ class MainActivity : AppCompatActivity() {
 
     val body = main_activity_log_edit_text.text.toString()
 
-    val chatLog = FirebaseDatabase.getInstance().getReference("/servers/${currentUser!!.currentServer}/channels/${currentUser!!.currentChannel}/chatLog").push()
+    val chatLog = FirebaseDatabase.getInstance().getReference("/cities/${currentUser!!.currentCity}/channels/${currentUser!!.currentChannel}/chatLog").push()
 
     val chat = ChatLog(chatLog.key!!, body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis() / 1000)
 
@@ -178,26 +177,26 @@ class MainActivity : AppCompatActivity() {
     override fun onCancelled(p0: DatabaseError) {}
   }
 
-  private fun setTitleForActionBar(currentServer: Server? = null) {
-    if (currentServer != null) {
-      supportActionBar?.title = currentServer.locality
+  private fun setTitleForActionBar(currentCity: City? = null) {
+    if (currentCity != null) {
+      supportActionBar?.title = currentCity.locality
 
-      if (currentServer.locality == currentServer.adminArea) {
-        supportActionBar?.subtitle = currentServer.countryCode
+      if (currentCity.locality == currentCity.adminArea) {
+        supportActionBar?.subtitle = currentCity.countryCode
       } else {
-        supportActionBar?.subtitle = currentServer.adminArea + ", " + currentServer.countryCode
+        supportActionBar?.subtitle = currentCity.adminArea + ", " + currentCity.countryCode
       }
     } else {
-      FirebaseDatabase.getInstance().getReference("/servers/${currentUser?.currentServer}")
+      FirebaseDatabase.getInstance().getReference("/cities/${currentUser?.currentCity}")
         .addListenerForSingleValueEvent(object: ValueEventListener {
-          override fun onDataChange(serverDataSnapshot: DataSnapshot) {
-            val server = serverDataSnapshot.getValue(Server::class.java) ?: return
-            supportActionBar?.title = server.locality
+          override fun onDataChange(cityDataSnapshot: DataSnapshot) {
+            val city = cityDataSnapshot.getValue(City::class.java) ?: return
+            supportActionBar?.title = city.locality
 
-            if (server.locality == server.adminArea) {
-              supportActionBar?.subtitle = server.countryCode
+            if (city.locality == city.adminArea) {
+              supportActionBar?.subtitle = city.countryCode
             } else {
-              supportActionBar?.subtitle = server.adminArea + ", " + server.countryCode
+              supportActionBar?.subtitle = city.adminArea + ", " + city.countryCode
             }
           }
           override fun onCancelled(p0: DatabaseError) {}
@@ -206,7 +205,7 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun listenForChatLog() {
-    chatLogRef = FirebaseDatabase.getInstance().getReference("/servers/${currentUser?.currentServer}/channels/${currentUser?.currentChannel}/chatLog")
+    chatLogRef = FirebaseDatabase.getInstance().getReference("/cities/${currentUser?.currentCity}/channels/${currentUser?.currentChannel}/chatLog")
     chatLogRef.removeEventListener(chatLogChildEventListener)
     chatLogRef.addChildEventListener(chatLogChildEventListener)
   }
@@ -220,7 +219,7 @@ class MainActivity : AppCompatActivity() {
         currentUser = p0.getValue(User::class.java)
         Picasso.get().load(currentUser?.photoUrl).into(activity_main_left_drawer_circle_image_view)
         activity_main_left_drawer_text_view.text = currentUser?.displayName
-        fetchServers()
+        fetchCities()
         setTitleForActionBar()
         listenForChatLog()
       }
@@ -228,8 +227,8 @@ class MainActivity : AppCompatActivity() {
     })
   }
 
-  private fun fetchUsers(serverId: String?) {
-    val ref = FirebaseDatabase.getInstance().getReference("/users").orderByChild("currentServer").equalTo(serverId)
+  private fun fetchUsers(cityId: String?) {
+    val ref = FirebaseDatabase.getInstance().getReference("/users").orderByChild("currentCity").equalTo(cityId)
 
     ref.addListenerForSingleValueEvent(object : ValueEventListener {
       override fun onDataChange(p0: DataSnapshot) {
@@ -253,32 +252,32 @@ class MainActivity : AppCompatActivity() {
     })
   }
 
-  private fun fetchServers() {
-    Log.d("test", "fetchserver ${currentUser?.uid}")
+  private fun fetchCities() {
+    Log.d("test", "fetchcities ${currentUser?.uid}")
 
-    FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/servers")
+    FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/cities")
       .addListenerForSingleValueEvent(object: ValueEventListener {
         override fun onDataChange(p0: DataSnapshot) {
-          val adapterServer = GroupAdapter<ViewHolder>()
-          recycler_view_servers.adapter = adapterServer
+          val adapterCity = GroupAdapter<ViewHolder>()
+          recycler_view_cities.adapter = adapterCity
           p0.children.forEach {
-            val server = it.getValue(FavoriteServer::class.java) ?: return
-            adapterServer.add(ServersRow(server, currentUser!!))
+            val city = it.getValue(City::class.java) ?: return
+            adapterCity.add(CitiesRow(city, currentUser!!))
 
-            adapterServer.setOnItemClickListener { item, view ->
-              val serverId = (item as ServersRow).favoriteServer.serverId
+            adapterCity.setOnItemClickListener { item, view ->
+              val cityId = (item as CitiesRow).city.id
 
-              if (serverId == currentUser?.currentServer) return@setOnItemClickListener
-              view.activity_main_servers_row_layout.setBackgroundColor(Color.LTGRAY)
+              if (cityId == currentUser?.currentCity) return@setOnItemClickListener
+              view.activity_main_cities_row_layout.setBackgroundColor(Color.LTGRAY)
 
               doAsync {
-                fetchUsers(serverId)
+                fetchUsers(cityId)
 
-                FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentServer")
-                  .setValue(serverId)
+                FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentCities")
+                  .setValue(cityId)
               }
 
-              FirebaseDatabase.getInstance().getReference("/servers/$serverId/channels").limitToFirst(1)
+              FirebaseDatabase.getInstance().getReference("/cities/$cityId/channels").limitToFirst(1)
                 .addListenerForSingleValueEvent(object: ValueEventListener {
                   override fun onDataChange(channels: DataSnapshot) {
                     FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentChannel")
@@ -293,7 +292,7 @@ class MainActivity : AppCompatActivity() {
             }
 
           }
-          recycler_view_servers.adapter = adapterServer
+          recycler_view_cities.adapter = adapterCity
           doAsync { activity_main_layout.closeDrawer(GravityCompat.START) }
         }
         override fun onCancelled(p0: DatabaseError) {}

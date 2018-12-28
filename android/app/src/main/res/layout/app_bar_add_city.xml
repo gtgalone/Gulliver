@@ -17,7 +17,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@drawable/background"
-                app:titleTextAppearance="@style/Toolbar.TitleText"/>
+                app:contentInsetStartWithNavigation="0dp"
+                app:contentInsetEndWithActions="0dp"
+                app:contentInsetEnd="0dp"/>
 
     </com.google.android.material.appbar.AppBarLayout>
 

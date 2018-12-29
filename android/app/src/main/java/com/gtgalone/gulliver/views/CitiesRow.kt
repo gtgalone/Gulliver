@@ -6,13 +6,13 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import com.google.firebase.database.FirebaseDatabase
 import com.gtgalone.gulliver.R
-import com.gtgalone.gulliver.models.City
+import com.gtgalone.gulliver.models.MyCity
 import com.gtgalone.gulliver.models.User
 import com.xwray.groupie.Item
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_main_cities_row.view.*
 
-class CitiesRow(val city: City, val user: User? = null) : Item<ViewHolder>() {
+class CitiesRow(val city: MyCity, val user: User? = null) : Item<ViewHolder>() {
   override fun bind(viewHolder: ViewHolder, position: Int) {
     viewHolder.itemView.apply {
       activity_main_cities_row_locality.text = city.locality
@@ -32,7 +32,7 @@ class CitiesRow(val city: City, val user: User? = null) : Item<ViewHolder>() {
       Log.d("test", "/users/${user.uid}/cities/${city.id}")
       FirebaseDatabase.getInstance().getReference("/users/${user.uid}/cities/${city.id}").removeValue()
     }
-    if (city.cityId == user.currentCity) {
+    if (city.id == user.currentCity) {
       viewHolder.itemView.apply {
         activity_main_cities_row_locality
           .setTextColor(ContextCompat.getColor(viewHolder.itemView.context, R.color.colorWhite))

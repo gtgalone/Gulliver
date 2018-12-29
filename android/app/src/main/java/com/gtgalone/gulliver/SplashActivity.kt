@@ -24,22 +24,42 @@ import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.firestore.FirebaseFirestore
 import com.gtgalone.gulliver.models.Channel
-import com.gtgalone.gulliver.models.FavoriteCity
+import com.gtgalone.gulliver.models.MyCity
 import com.gtgalone.gulliver.models.City
+import com.gtgalone.gulliver.models.User
 import org.jetbrains.anko.doAsync
 
 class SplashActivity : AppCompatActivity() {
   companion object {
     const val TAG = "SplashActivity"
     const val CURRENT_CITY = "CurrentCity"
-    const val CURRENT_CHANNEL = "CurrentChannel"
     const val REQUEST_PERMISSIONS_REQUEST_CODE = 34
   }
 
   private lateinit var databaseReference: DatabaseReference
   private lateinit var locationManager: LocationManager
   private lateinit var nextIntent: Intent
+
+  private val uid = FirebaseAuth.getInstance().uid
+  private val db = FirebaseFirestore.getInstance()
+  private lateinit var userRef: DatabaseReference
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_splash)
+
+    if (uid == null) {
+      nextIntent = Intent(this@SplashActivity, SignInActivity::class.java)
+    } else {
+      nextIntent = Intent(this@SplashActivity, MainActivity::class.java)
+      userRef = FirebaseDatabase.getInstance().getReference("/users/$uid")
+    }
+
+    databaseReference = FirebaseDatabase.getInstance().getReference("/cities")
+    locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+  }
 
   public override fun onStart() {
     super.onStart()
@@ -95,23 +115,6 @@ class SplashActivity : AppCompatActivity() {
     }
   }
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_splash)
-
-    val uid = FirebaseAuth.getInstance().uid
-
-    if (uid == null) {
-      nextIntent = Intent(this@SplashActivity, SignInActivity::class.java)
-    } else {
-      nextIntent = Intent(this@SplashActivity, MainActivity::class.java)
-    }
-
-    databaseReference = FirebaseDatabase.getInstance().getReference("/cities")
-    locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-  }
-
-
   private val locationListener: android.location.LocationListener = object : LocationListener {
     override fun onLocationChanged(location: android.location.Location?) {
       Log.d(TAG, "loc cha")
@@ -154,7 +157,7 @@ class SplashActivity : AppCompatActivity() {
       val latitude = location.latitude
       val longitude = location.longitude
 
-      val locationInformation = geo.getFromLocation(51.496326, -0.114733, 10)[0]
+      val locationInformation = geo.getFromLocation(43.015851, -76.132164, 10)[0]
 
       val countryCode = locationInformation.countryCode
       val adminArea = locationInformation.adminArea
@@ -166,112 +169,80 @@ class SplashActivity : AppCompatActivity() {
           adminArea.replace(" ", "").toLowerCase() + "-" +
           locality.replace(" ", "").toLowerCase()
 
-      getCity(City("", name, countryCode, adminArea, locality))
+      getCity(City(name, countryCode, adminArea, locality))
     }
   }
 
   private fun getCity(city: City) {
-    val cityNameRef = databaseReference.orderByChild("name").equalTo(city.name)
-    cityNameRef.addListenerForSingleValueEvent(object: ValueEventListener {
-      override fun onDataChange(p0: DataSnapshot) {
-        if (!p0.hasChildren()) {
-          val cityRef = databaseReference.push()
-          cityRef.setValue(City(cityRef.key!!, city.name, city.countryCode, city.adminArea, city.locality))
-            .addOnCompleteListener {
-              val channels = arrayListOf("general", "trade")
-              for (channel in channels) {
-                val channelRef = FirebaseDatabase.getInstance().getReference("/cities/${cityRef.key}/channels").push()
-                channelRef.setValue(Channel(channelRef.key!!, channel))
+    db.collection("cities").whereEqualTo("id", city.id).get()
+      .addOnSuccessListener {
+        if (it.isEmpty) {
+          db.collection("cities").document(city.id).set(City(city.id, city.countryCode, city.adminArea, city.locality))
+          .addOnSuccessListener {
+            val channels = arrayListOf("general", "trade")
+            for (channel in channels) {
+              Log.d("test", channel)
+              db.collection("cities").document(city.id)
+                .collection("channels").document(channel)
+                .set(Channel(channel))
 
-                if (channel == "general") {
+              if (channel == "general") {
 
-                  val uid = FirebaseAuth.getInstance().uid
-                  if (uid != null) {
-                    FirebaseDatabase.getInstance().getReference("/users/$uid/currentCity").setValue(cityRef.key)
-                    FirebaseDatabase.getInstance().getReference("/users/$uid/currentChannel").setValue(channelRef.key)
-
-                    val favoriteCityRef = FirebaseDatabase.getInstance().getReference("/users/$uid/cities")
-                    favoriteCityRef.orderByChild("cityId").equalTo(cityRef.key)
-                      .addListenerForSingleValueEvent(object: ValueEventListener {
-                        override fun onDataChange(p0: DataSnapshot) {
-                          if (!p0.hasChildren()) {
-                            val pushFavoriteCityRef = favoriteCityRef.push()
-                            pushFavoriteCityRef.setValue(FavoriteCity(
-                              pushFavoriteCityRef.key,
-                              cityRef.key,
-                              city.countryCode,
-                              city.adminArea,
-                              city.locality
-                            ))
-                            favoriteCityRef.removeEventListener(this)
-                          }
-                        }
-                        override fun onCancelled(p0: DatabaseError) {}
-                      })
-                  }
-
-                  nextIntent.putExtra(CURRENT_CITY, City(
-                    cityRef.key,
-                    city.name,
-                    city.countryCode,
-                    city.adminArea,
-                    city.locality
-                  ))
-                  nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channelRef.key!!, channel))
-
-                  changeActivity()
-                }
-              }
-            }
-        } else {
-          p0.children.forEach {
-            val cityInfo = it.getValue(City::class.java) ?: return
-            val channelRef = FirebaseDatabase.getInstance().getReference("/cities/${cityInfo.id}/channels").limitToFirst(1)
-            channelRef.addListenerForSingleValueEvent(object: ValueEventListener {
-              override fun onDataChange(p0: DataSnapshot) {
-                val channel = p0.children.first().getValue(Channel::class.java) ?: return
-
-                val uid = FirebaseAuth.getInstance().uid
                 if (uid != null) {
-                  FirebaseDatabase.getInstance().getReference("/users/$uid/currentCity").setValue(cityInfo.id)
-                  FirebaseDatabase.getInstance().getReference("/users/$uid/currentChannel").setValue(channel.id)
+                  userRef.child("currentCity").setValue(city.id)
+                  userRef.child("currentChannel").setValue("general")
 
-                  val favoriteCityRef = FirebaseDatabase.getInstance().getReference("/users/$uid/cities")
-                  favoriteCityRef.orderByChild("cityId").equalTo(cityInfo.id)
-                    .addListenerForSingleValueEvent(object: ValueEventListener {
-                      override fun onDataChange(p0: DataSnapshot) {
-                        if (!p0.hasChildren()) {
-                          val pushFavoriteCityRef = favoriteCityRef.push()
-                          pushFavoriteCityRef.setValue(FavoriteCity(
-                            pushFavoriteCityRef.key,
-                            cityInfo.id,
-                            cityInfo.countryCode,
-                            cityInfo.adminArea,
-                            cityInfo.locality
-                          ))
-                        }
-                      }
-                      override fun onCancelled(p0: DatabaseError) {}
-                    })
+                  addCityIfNotExist(city, uid)
                 }
-                nextIntent.putExtra(CURRENT_CITY, City(
-                  cityInfo.id,
-                  cityInfo.name,
-                  cityInfo.countryCode,
-                  cityInfo.adminArea,
-                  cityInfo.locality
+
+                nextIntent.putExtra(CURRENT_CITY, MyCity(
+                  city.id,
+                  city.countryCode,
+                  city.adminArea,
+                  city.locality
                 ))
-                nextIntent.putStringArrayListExtra(CURRENT_CHANNEL, arrayListOf(channel.id, channel.name))
 
                 changeActivity()
               }
-              override fun onCancelled(p0: DatabaseError) {}
-            })
+            }
           }
+        } else {
+          Log.d("test", "else")
+          val cityInfo = it.documents.first().toObject(City::class.java) ?: return@addOnSuccessListener
+          if (uid != null) {
+            userRef.child("currentCity").setValue(cityInfo.id)
+            userRef.child("currentChannel").setValue("general")
+
+            addCityIfNotExist(cityInfo, uid)
+          }
+          nextIntent.putExtra(CURRENT_CITY, MyCity(
+            cityInfo.id,
+            cityInfo.countryCode,
+            cityInfo.adminArea,
+            cityInfo.locality
+          ))
+
+          changeActivity()
         }
       }
-      override fun onCancelled(p0: DatabaseError) {}
-    })
+  }
+
+  private fun addCityIfNotExist(city: City, uid: String) {
+    val myCitiesRef = FirebaseDatabase.getInstance().getReference("/users/$uid/cities")
+    FirebaseDatabase.getInstance().getReference("/users/$uid/cities/${city.id}")
+      .addListenerForSingleValueEvent(object: ValueEventListener {
+        override fun onDataChange(p0: DataSnapshot) {
+          if (!p0.hasChildren()) {
+            myCitiesRef.child(city.id).setValue(MyCity(
+              city.id,
+              city.countryCode,
+              city.adminArea,
+              city.locality
+            ))
+          }
+        }
+        override fun onCancelled(p0: DatabaseError) {}
+      })
   }
 
   private fun changeActivity() {

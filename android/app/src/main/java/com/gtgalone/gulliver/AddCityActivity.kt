@@ -8,9 +8,8 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import com.google.firebase.database.*
-import com.gtgalone.gulliver.models.Channel
-import com.gtgalone.gulliver.models.City
-import com.gtgalone.gulliver.models.FavoriteCity
+import com.google.firebase.firestore.FirebaseFirestore
+import com.gtgalone.gulliver.models.MyCity
 import com.gtgalone.gulliver.views.CitiesRow
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
@@ -21,6 +20,7 @@ import kotlinx.android.synthetic.main.custom_view_search.*
 class AddCityActivity : AppCompatActivity() {
 
   private var menuAddCity: Menu? = null
+  private val db = FirebaseFirestore.getInstance()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -37,7 +37,7 @@ class AddCityActivity : AppCompatActivity() {
   }
 
   private fun fetchCities(query: String? = null) {
-    var cityRef = FirebaseDatabase.getInstance().getReference("/cities/").orderByChild("locality")
+    var cityRef = db.collection("/cities/").orderBy("locality")
 
     if (query != null) {
       var q: String? = ""
@@ -51,26 +51,22 @@ class AddCityActivity : AppCompatActivity() {
       cityRef = cityRef.startAt(q)
     }
 
-    cityRef
-      .addListenerForSingleValueEvent(object: ValueEventListener {
-
-        override fun onDataChange(p0: DataSnapshot) {
-          val adapter = GroupAdapter<ViewHolder>()
-
-          p0.children.forEach {
-            val city = it.getValue(City::class.java) ?: return
-            adapter.add(CitiesRow(city))
-            adapter.setOnItemClickListener { item, view ->
-              val citiesRow = item as CitiesRow
-              val currentUserRef = FirebaseDatabase.getInstance().getReference("/users/${MainActivity.currentUser?.uid}")
-              currentUserRef.child("cities")
-                .orderByChild("locality").equalTo(citiesRow.city.locality)
-                .addListenerForSingleValueEvent(object: ValueEventListener {
-                  override fun onDataChange(userCitiesDataSnapshot: DataSnapshot) {
-                    if (!userCitiesDataSnapshot.hasChildren()) {
-                      val pushCityRef = currentUserRef.child("cities").push()
-                      pushCityRef.setValue(FavoriteCity(
-                        pushCityRef.key,
+    cityRef.get()
+      .addOnSuccessListener {
+        val adapter = GroupAdapter<ViewHolder>()
+        it.documents.forEach { docSnapshot ->
+          val city = docSnapshot.toObject(MyCity::class.java) ?: return@addOnSuccessListener
+          adapter.add(CitiesRow(city))
+          adapter.setOnItemClickListener { item, view ->
+            val citiesRow = item as CitiesRow
+            val currentUserRef = FirebaseDatabase.getInstance().getReference("/users/${MainActivity.currentUser?.uid}")
+            currentUserRef.child("cities")
+              .orderByChild("locality").equalTo(citiesRow.city.locality)
+              .addListenerForSingleValueEvent(object: ValueEventListener {
+                override fun onDataChange(userCitiesDataSnapshot: DataSnapshot) {
+                  if (!userCitiesDataSnapshot.hasChildren()) {
+                    currentUserRef.child("cities").child(citiesRow.city.id!!)
+                      .setValue(MyCity(
                         citiesRow.city.id,
                         citiesRow.city.countryCode,
                         citiesRow.city.adminArea,
@@ -78,18 +74,14 @@ class AddCityActivity : AppCompatActivity() {
                       )).addOnCompleteListener {
                         finish()
                       }
-                    }
                   }
-                  override fun onCancelled(p0: DatabaseError) {}
-                })
-            }
+                }
+                override fun onCancelled(p0: DatabaseError) {}
+              })
           }
           recycler_view_add_city.adapter = adapter
-
         }
-        override fun onCancelled(p0: DatabaseError) {}
-      })
-
+      }
   }
 
   override fun onSupportNavigateUp(): Boolean {

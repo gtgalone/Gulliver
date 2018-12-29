@@ -13,8 +13,11 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.firestore.*
 import com.gtgalone.gulliver.models.*
 import com.gtgalone.gulliver.views.DirectMessagesLogFrom
 import com.gtgalone.gulliver.views.DirectMessagesLogTo
@@ -32,17 +35,35 @@ import org.jetbrains.anko.doAsync
 
 class MainActivity : AppCompatActivity() {
   private val adapter = GroupAdapter<ViewHolder>()
-  private lateinit var chatLogRef: DatabaseReference
+  private val db = FirebaseFirestore.getInstance()
+
+  private lateinit var chatLogRef: CollectionReference
+  private lateinit var chatEventListener: ListenerRegistration
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
     setSupportActionBar(toolbar)
 
-    val currentCity = intent.getParcelableExtra<City>(SplashActivity.CURRENT_CITY)
+    val currentCity = intent.getParcelableExtra<MyCity>(SplashActivity.CURRENT_CITY)
+
     setTitleForActionBar(currentCity)
 
-    recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
+//    recycler_view_main_activity_log.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+//      override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+//        super.onScrollStateChanged(recyclerView, newState)
+//        when (newState) {
+//          RecyclerView.SCROLL_STATE_IDLE -> {
+//            if ((recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() == 0) {
+//              Log.d("test", "add")
+//              FirebaseDatabase.getInstance().getReference("")
+//              adapter.add(0, DirectMessagesLogFrom("11", currentUser!!.uid, -1))
+//              adapter.notifyDataSetChanged()
+//            }
+//          }
+//        }
+//      }
+//    })
     recycler_view_main_activity_log.adapter = adapter
 
     fetchCurrentUser()
@@ -96,11 +117,8 @@ class MainActivity : AppCompatActivity() {
 
     val body = main_activity_log_edit_text.text.toString()
 
-    val chatLog = FirebaseDatabase.getInstance().getReference("/cities/${currentUser!!.currentCity}/channels/${currentUser!!.currentChannel}/chatLog").push()
-
-    val chat = ChatLog(chatLog.key!!, body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis() / 1000)
-
-    chatLog.setValue(chat)
+    chatLogRef
+      .add(ChatLog(body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis() / 1000))
 
     main_activity_log_edit_text.text.clear()
   }
@@ -140,41 +158,42 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  private val chatLogChildEventListener = object: ChildEventListener {
-    override fun onChildAdded(p0: DataSnapshot, p1: String?) {
-      val chatLog = p0.getValue(ChatLog::class.java) ?: return
+  private fun listenForChatLog() {
+    chatLogRef = db.collection("cities").document(currentUser?.currentCity!!)
+      .collection("channels").document(currentUser?.currentChannel!!)
+      .collection("chatLog")
 
-      when(chatLog.fromId) {
-        currentUser?.uid -> {
-          adapter.add(
-            DirectMessagesLogTo(
-              chatLog.text,
-              currentUser!!,
-              chatLog.timeStamp
+    chatEventListener = chatLogRef.addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+      Log.d("test", "listenForChatLog")
+      querySnapshot!!.documentChanges.forEach {
+        val chatLog = it.document.toObject(ChatLog::class.java) ?: return@addSnapshotListener
+
+        when(chatLog.fromId) {
+          currentUser?.uid -> {
+            adapter.add(
+              DirectMessagesLogTo(
+                chatLog.text,
+                currentUser!!,
+                chatLog.timeStamp
+              )
             )
-          )
-        }
-        else -> {
-          adapter.add(
-            DirectMessagesLogFrom(
-              chatLog.text,
-              chatLog.fromId,
-              chatLog.timeStamp
+          }
+          else -> {
+            adapter.add(
+              DirectMessagesLogFrom(
+                chatLog.text,
+                chatLog.fromId,
+                chatLog.timeStamp
+              )
             )
-          )
+          }
         }
       }
-
-      recycler_view_main_activity_log.scrollToPosition(adapter.itemCount)
-      recycler_view_main_activity_log.adapter = adapter
+//      adapter.notifyDataSetChanged()
     }
-    override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
-    override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
-    override fun onChildRemoved(p0: DataSnapshot) {}
-    override fun onCancelled(p0: DatabaseError) {}
   }
 
-  private fun setTitleForActionBar(currentCity: City? = null) {
+  private fun setTitleForActionBar(currentCity: MyCity? = null) {
     if (currentCity != null) {
       supportActionBar?.title = currentCity.locality
 
@@ -201,23 +220,16 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  private fun listenForChatLog() {
-    chatLogRef = FirebaseDatabase.getInstance().getReference("/cities/${currentUser?.currentCity}/channels/${currentUser?.currentChannel}/chatLog")
-    chatLogRef.removeEventListener(chatLogChildEventListener)
-    chatLogRef.addChildEventListener(chatLogChildEventListener)
-  }
-
   private fun fetchCurrentUser() {
     val uid = FirebaseAuth.getInstance().uid
     val ref = FirebaseDatabase.getInstance().getReference("/users/$uid")
 
     ref.addListenerForSingleValueEvent(object: ValueEventListener {
       override fun onDataChange(p0: DataSnapshot) {
-        currentUser = p0.getValue(User::class.java)
+        currentUser = p0.getValue(User::class.java) ?: return
         Picasso.get().load(currentUser?.photoUrl).into(activity_main_left_drawer_circle_image_view)
         activity_main_left_drawer_text_view.text = currentUser?.displayName
         fetchCities()
-        setTitleForActionBar()
         listenForChatLog()
       }
       override fun onCancelled(p0: DatabaseError) {}
@@ -257,39 +269,38 @@ class MainActivity : AppCompatActivity() {
     FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/cities")
       .addChildEventListener(object: ChildEventListener {
         override fun onChildAdded(p0: DataSnapshot, p1: String?) {
+          Log.d("test", "child add fetch city")
 
-          val city = p0.getValue(City::class.java) ?: return
+          val city = p0.getValue(MyCity::class.java) ?: return
           adapterCity.add(CitiesRow(city, currentUser))
+          recycler_view_cities.adapter = adapterCity
           mKeys.add(p0.key!!)
           adapterCity.setOnItemClickListener { item, view ->
-            val cityId = (item as CitiesRow).city.cityId
+            val cityId = (item as CitiesRow).city.id
+            chatEventListener.remove()
 
             if (cityId == currentUser?.currentCity) return@setOnItemClickListener
             view.activity_main_cities_row_layout.setBackgroundColor(Color.LTGRAY)
+            setTitleForActionBar(item.city)
 
             doAsync {
               fetchUsers(cityId)
 
               FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentCity")
                 .setValue(cityId)
-            }
 
-            FirebaseDatabase.getInstance().getReference("/cities/$cityId/channels").limitToFirst(1)
-              .addListenerForSingleValueEvent(object: ValueEventListener {
-                override fun onDataChange(channels: DataSnapshot) {
-                  FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentChannel")
-                    .setValue(channels.children.first().getValue(Channel::class.java)?.id)
-                    .addOnCompleteListener {
-                      adapter.clear()
-                      fetchCurrentUser()
-                    }
+              FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentChannel")
+                .setValue("general")
+                .addOnCompleteListener {
+                  adapter.clear()
+                  fetchCurrentUser()
                 }
-                override fun onCancelled(p0: DatabaseError) {}
-              })
-            doAsync { activity_main_layout.closeDrawer(GravityCompat.START) }
+
+//              activity_main_layout.closeDrawer(GravityCompat.START)
+            }
+            adapterCity.notifyDataSetChanged()
           }
 
-          recycler_view_cities.adapter = adapterCity
         }
         override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
         override fun onChildMoved(p0: DataSnapshot, p1: String?) {}

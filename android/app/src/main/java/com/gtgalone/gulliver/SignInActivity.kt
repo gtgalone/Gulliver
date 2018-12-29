@@ -18,13 +18,14 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.iid.FirebaseInstanceId
-import com.gtgalone.gulliver.models.FavoriteCity
+import com.gtgalone.gulliver.models.MyCity
 import com.gtgalone.gulliver.models.City
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
 class SignInActivity : AppCompatActivity() {
-  private lateinit var mAuth: FirebaseAuth
   private lateinit var mGoogleSignInClient: GoogleSignInClient
+  private lateinit var mAuth: FirebaseAuth
+  private lateinit var nextIntent: Intent
 
   companion object {
     const val RC_SIGN_IN = 0
@@ -42,8 +43,8 @@ class SignInActivity : AppCompatActivity() {
       .build()
 
     mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
-
     mAuth = FirebaseAuth.getInstance()
+    nextIntent = Intent(this@SignInActivity, MainActivity::class.java)
 
     sign_in_google_button.setOnClickListener {
       signIn()
@@ -56,16 +57,9 @@ class SignInActivity : AppCompatActivity() {
   }
 
   private fun changeAcitivity() {
-    val nextIntent = Intent(this@SignInActivity, MainActivity::class.java)
-
     nextIntent.putExtra(
       SplashActivity.CURRENT_CITY,
-      intent.getParcelableExtra<FavoriteCity>(SplashActivity.CURRENT_CITY)
-    )
-
-    nextIntent.putExtra(
-      SplashActivity.CURRENT_CHANNEL,
-      intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
+      intent.getParcelableExtra<MyCity>(SplashActivity.CURRENT_CITY)
     )
 
     startActivity(nextIntent)
@@ -107,58 +101,52 @@ class SignInActivity : AppCompatActivity() {
   private fun saveUserToFirebaseDatabase(displayName: String, email: String, photoUrl: String) {
     val uid = FirebaseAuth.getInstance().uid ?: ""
     val ref = FirebaseDatabase.getInstance().getReference("/users/$uid")
+    val favoriteCityRef = ref.child("cities")
 
     FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
       val token = it.result?.token ?: ""
 
       val currentCity = intent.getParcelableExtra<City>(SplashActivity.CURRENT_CITY)
-      val currentChannel = intent.getStringArrayListExtra(SplashActivity.CURRENT_CHANNEL)
+
+      val user = User(uid, displayName, email, photoUrl, currentCity.id, "general")
+
       ref.limitToFirst(1)
         .addListenerForSingleValueEvent(object: ValueEventListener {
           override fun onDataChange(p0: DataSnapshot) {
 
             if (p0.hasChildren()) {
-                val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
-                tokenRef.setValue(true)
+              val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
+              tokenRef.setValue(true)
 
-                val favoriteCityRef = FirebaseDatabase.getInstance().getReference("/users/$uid/cities")
-                favoriteCityRef.orderByChild("cityId").equalTo(currentCity.id)
-                  .addListenerForSingleValueEvent(object: ValueEventListener {
-                    override fun onDataChange(p0: DataSnapshot) {
-                      if (!p0.hasChildren()) {
-                        val pushFavoriteCityRef = favoriteCityRef.push()
-                        pushFavoriteCityRef.setValue(FavoriteCity(
-                          pushFavoriteCityRef.key,
-                          currentCity.id,
-                          currentCity.countryCode,
-                          currentCity.adminArea,
-                          currentCity.locality
-                        ))
-
-                        changeAcitivity()
-                      } else {
-                        changeAcitivity()
-                      }
+              favoriteCityRef.orderByChild("cityId").equalTo(currentCity.id)
+                .addListenerForSingleValueEvent(object: ValueEventListener {
+                  override fun onDataChange(p0: DataSnapshot) {
+                    if (!p0.hasChildren()) {
+                      favoriteCityRef.child(currentCity.id).setValue(MyCity(
+                        currentCity.id,
+                        currentCity.countryCode,
+                        currentCity.adminArea,
+                        currentCity.locality
+                      ))
                     }
-                    override fun onCancelled(p0: DatabaseError) {}
-                  })
+                    changeAcitivity()
+                  }
+                  override fun onCancelled(p0: DatabaseError) {}
+                })
             } else {
-              ref.setValue(User(uid, displayName, email, photoUrl, currentCity.id, currentChannel[0])).addOnCompleteListener {
-                val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
-                tokenRef.setValue(true)
+              ref.setValue(user)
+                .addOnCompleteListener {
+                  val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
+                  tokenRef.setValue(true)
 
-                val favoriteCityRef = FirebaseDatabase.getInstance().getReference("/users/$uid/cities/").push()
-                Log.d("test", currentCity.id)
+                  favoriteCityRef.child(currentCity.id).setValue(MyCity(
+                    currentCity.id,
+                    currentCity.countryCode,
+                    currentCity.adminArea,
+                    currentCity.locality
+                  ))
 
-                favoriteCityRef.setValue(FavoriteCity(
-                  favoriteCityRef.key,
-                  currentCity.id,
-                  currentCity.countryCode,
-                  currentCity.adminArea,
-                  currentCity.locality
-                ))
-
-                changeAcitivity()
+                  changeAcitivity()
               }
             }
           }

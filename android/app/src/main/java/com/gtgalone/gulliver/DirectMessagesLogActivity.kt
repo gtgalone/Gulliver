@@ -85,8 +85,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
             else -> adapter.add(DirectMessagesLogTo(directMessage.text, currentUser, directMessage.timeStamp))
           }
 
-          recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount)
-          recycler_view_direct_messages_log.adapter = adapter
+          adapter.notifyDataSetChanged()
         }
       }
 
@@ -117,12 +116,10 @@ class DirectMessagesLogActivity : AppCompatActivity() {
     val directMessage = DirectMessageLog(fromLogRef.key!!, body, fromId, toId, System.currentTimeMillis() / 1000)
 
     fromLogRef.setValue(directMessage).addOnSuccessListener {
-      recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount)
-      recycler_view_direct_messages_log.adapter = adapter
+      adapter.notifyDataSetChanged()
     }
     if (fromId != toId) toLogRef.setValue(directMessage).addOnSuccessListener {
-      recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount)
-      recycler_view_direct_messages_log.adapter = adapter
+      adapter.notifyDataSetChanged()
     }
 
     val fromRef = FirebaseDatabase.getInstance().getReference("/direct-messages/$fromId/$toId")

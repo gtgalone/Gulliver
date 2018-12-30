@@ -18,9 +18,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.firestore.*
+import com.google.firebase.firestore.Query
 import com.gtgalone.gulliver.models.*
-import com.gtgalone.gulliver.views.DirectMessagesLogFrom
-import com.gtgalone.gulliver.views.DirectMessagesLogTo
+import com.gtgalone.gulliver.views.TextMessage
 import com.gtgalone.gulliver.views.PeopleRow
 import com.gtgalone.gulliver.views.CitiesRow
 import com.squareup.picasso.Picasso
@@ -33,13 +33,14 @@ import kotlinx.android.synthetic.main.activity_main_left_drawer.*
 import kotlinx.android.synthetic.main.activity_main_cities_row.view.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import org.jetbrains.anko.collections.forEachReversedByIndex
 import org.jetbrains.anko.doAsync
 
 class MainActivity : AppCompatActivity() {
   private val adapter = GroupAdapter<ViewHolder>()
   private val db = FirebaseFirestore.getInstance()
 
-  private lateinit var chatLogRef: CollectionReference
+  private lateinit var chatMessageRef: CollectionReference
   private lateinit var chatEventListener: ListenerRegistration
   private lateinit var messageSection: Section
   private var isInit = true
@@ -61,7 +62,7 @@ class MainActivity : AppCompatActivity() {
             if ((recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() == 0) {
               Log.d("test", "add")
               FirebaseDatabase.getInstance().getReference("")
-              adapter.add(0, DirectMessagesLogFrom("11", currentUser!!.uid, -1))
+              adapter.add(0, TextMessage(ChatMessage("11", "", "", -1), currentUser!!))
               adapter.notifyDataSetChanged()
             }
           }
@@ -121,8 +122,8 @@ class MainActivity : AppCompatActivity() {
 
     val body = main_activity_log_edit_text.text.toString()
 
-    chatLogRef
-      .add(ChatLog(body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis() / 1000))
+    chatMessageRef
+      .add(ChatMessage(body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis() / 1000))
 
     main_activity_log_edit_text.text.clear()
   }
@@ -162,41 +163,39 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  private fun listenForChatLog() {
-    chatLogRef = db.collection("cities").document(currentUser?.currentCity!!)
+  private fun listenForMessages() {
+    chatMessageRef = db.collection("cities").document(currentUser?.currentCity!!)
       .collection("channels").document(currentUser?.currentChannel!!)
-      .collection("chatLog")
+      .collection("chatMessages")
 
-    chatEventListener = chatLogRef.orderBy("timeStamp")
+    chatEventListener = chatMessageRef.orderBy("timeStamp", Query.Direction.DESCENDING).limit(10)
       .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
-        Log.d("test", "listenForChatLog")
+        Log.d("test", "listenForMessages")
         val items = mutableListOf<Item>()
-        querySnapshot!!.documentChanges.forEach {
-          val chatLog = it.document.toObject(ChatLog::class.java)
-          when(chatLog.fromId) {
-            currentUser?.uid -> {
-              items.add(DirectMessagesLogTo(
-                chatLog.text,
-                currentUser!!,
-                chatLog.timeStamp
-              ))
-            }
-            else -> {
-              items.add(
-                DirectMessagesLogFrom(
-                  chatLog.text,
-                  chatLog.fromId,
-                  chatLog.timeStamp
-                )
+        querySnapshot!!.documentChanges.forEachReversedByIndex {
+          val chatMessage = it.document.toObject(ChatMessage::class.java) ?: return@addSnapshotListener
+          Log.d("test", "chage ${chatMessage.text}")
+          if (isInit) {
+            items.add(TextMessage(
+              chatMessage,
+              currentUser!!
+            ))
+          } else {
+            adapter.add(
+              TextMessage(
+                chatMessage,
+                currentUser!!
               )
-            }
+            )
+            recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
+            return@addSnapshotListener
           }
         }
         if (isInit) {
+          Log.d("test", "init")
           messageSection = Section(items)
           adapter.add(messageSection)
-        } else {
-          messageSection.update(items)
+          isInit = false
         }
 
         recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
@@ -240,7 +239,7 @@ class MainActivity : AppCompatActivity() {
         Picasso.get().load(currentUser?.photoUrl).into(activity_main_left_drawer_circle_image_view)
         activity_main_left_drawer_text_view.text = currentUser?.displayName
         fetchCities()
-        listenForChatLog()
+        listenForMessages()
       }
       override fun onCancelled(p0: DatabaseError) {}
     })
@@ -284,6 +283,7 @@ class MainActivity : AppCompatActivity() {
         recycler_view_cities.adapter = adapterCity
         mKeys.add(p0.key!!)
         adapterCity.setOnItemClickListener { item, view ->
+          isInit = true
           userCitiesRef.removeEventListener(this)
           val cityId = (item as CitiesRow).city.id
           chatEventListener.remove()

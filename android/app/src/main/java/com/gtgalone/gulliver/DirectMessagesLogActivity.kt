@@ -3,9 +3,7 @@ package com.gtgalone.gulliver
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.gtgalone.gulliver.models.DirectMessageLog
-import com.gtgalone.gulliver.views.DirectMessagesLogFrom
-import com.gtgalone.gulliver.views.DirectMessagesLogTo
+import com.gtgalone.gulliver.views.TextMessage
 import com.gtgalone.gulliver.models.User
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
@@ -13,10 +11,10 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.gson.Gson
+import com.gtgalone.gulliver.models.ChatMessage
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.app_bar_direct_messages_log.*
-import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_direct_messages_log.*
 
 class DirectMessagesLogActivity : AppCompatActivity() {
@@ -64,28 +62,17 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
     ref.addChildEventListener(object: ChildEventListener {
       override fun onChildAdded(p0: DataSnapshot, p1: String?) {
-
-        val directMessage = p0.getValue(DirectMessageLog::class.java)
-        if (directMessage != null) {
-          when (directMessage.toId) {
-            directMessage.fromId -> adapter.add(
-              DirectMessagesLogTo(
-                directMessage.text,
-                currentUser,
-                directMessage.timeStamp
-              )
+        Log.d("test", "adds")
+        val chatMessage = p0.getValue(ChatMessage::class.java)
+        if (chatMessage != null) {
+          adapter.add(
+            TextMessage(
+              chatMessage,
+              currentUser
             )
-            currentUser.uid -> adapter.add(
-              DirectMessagesLogFrom(
-                directMessage.text,
-                toUser.uid,
-                directMessage.timeStamp
-              )
-            )
-            else -> adapter.add(DirectMessagesLogTo(directMessage.text, currentUser, directMessage.timeStamp))
-          }
-
-          adapter.notifyDataSetChanged()
+          )
+//          adapter.notifyDataSetChanged()
+          recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount - 1)
         }
       }
 
@@ -113,20 +100,20 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
     val body = direct_messages_log_edit_text.text.toString()
 
-    val directMessage = DirectMessageLog(fromLogRef.key!!, body, fromId, toId, System.currentTimeMillis() / 1000)
+    val chatMessage = ChatMessage(body, fromId, toId, System.currentTimeMillis() / 1000)
 
-    fromLogRef.setValue(directMessage).addOnSuccessListener {
+    fromLogRef.setValue(chatMessage).addOnSuccessListener {
       adapter.notifyDataSetChanged()
     }
-    if (fromId != toId) toLogRef.setValue(directMessage).addOnSuccessListener {
+    if (fromId != toId) toLogRef.setValue(chatMessage).addOnSuccessListener {
       adapter.notifyDataSetChanged()
     }
 
     val fromRef = FirebaseDatabase.getInstance().getReference("/direct-messages/$fromId/$toId")
     val toRef = FirebaseDatabase.getInstance().getReference("/direct-messages/$toId/$fromId")
 
-    fromRef.setValue(directMessage)
-    if (fromId != toId) toRef.setValue(directMessage)
+    fromRef.setValue(chatMessage)
+    if (fromId != toId) toRef.setValue(chatMessage)
 
     direct_messages_log_edit_text.text.clear()
 

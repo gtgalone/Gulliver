@@ -2,18 +2,18 @@ package com.gtgalone.gulliver.views
 
 import com.gtgalone.gulliver.MainActivity
 import com.gtgalone.gulliver.R
-import com.gtgalone.gulliver.models.DirectMessageLog
 import com.gtgalone.gulliver.models.User
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.gtgalone.gulliver.models.ChatMessage
 import com.squareup.picasso.Picasso
 import com.xwray.groupie.kotlinandroidextensions.Item
 import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.activity_direct_messages_row.view.*
 
-class DirectMessagesRow(private val directMessage: DirectMessageLog) : Item() {
+class DirectMessagesRow(private val directMessage: ChatMessage) : Item() {
   var person: User? = null
   override fun bind(viewHolder: ViewHolder, position: Int) {
 

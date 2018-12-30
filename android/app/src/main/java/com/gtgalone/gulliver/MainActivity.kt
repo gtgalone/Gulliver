@@ -25,7 +25,9 @@ import com.gtgalone.gulliver.views.PeopleRow
 import com.gtgalone.gulliver.views.CitiesRow
 import com.squareup.picasso.Picasso
 import com.xwray.groupie.GroupAdapter
+import com.xwray.groupie.Section
 import com.xwray.groupie.ViewHolder
+import com.xwray.groupie.kotlinandroidextensions.Item
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main_left_drawer.*
 import kotlinx.android.synthetic.main.activity_main_cities_row.view.*
@@ -39,6 +41,8 @@ class MainActivity : AppCompatActivity() {
 
   private lateinit var chatLogRef: CollectionReference
   private lateinit var chatEventListener: ListenerRegistration
+  private lateinit var messageSection: Section
+  private var isInit = true
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -49,21 +53,21 @@ class MainActivity : AppCompatActivity() {
 
     setTitleForActionBar(currentCity)
 
-//    recycler_view_main_activity_log.addOnScrollListener(object: RecyclerView.OnScrollListener() {
-//      override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-//        super.onScrollStateChanged(recyclerView, newState)
-//        when (newState) {
-//          RecyclerView.SCROLL_STATE_IDLE -> {
-//            if ((recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() == 0) {
-//              Log.d("test", "add")
-//              FirebaseDatabase.getInstance().getReference("")
-//              adapter.add(0, DirectMessagesLogFrom("11", currentUser!!.uid, -1))
-//              adapter.notifyDataSetChanged()
-//            }
-//          }
-//        }
-//      }
-//    })
+    recycler_view_main_activity_log.addOnScrollListener(object: RecyclerView.OnScrollListener() {
+      override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+        super.onScrollStateChanged(recyclerView, newState)
+        when (newState) {
+          RecyclerView.SCROLL_STATE_IDLE -> {
+            if ((recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() == 0) {
+              Log.d("test", "add")
+              FirebaseDatabase.getInstance().getReference("")
+              adapter.add(0, DirectMessagesLogFrom("11", currentUser!!.uid, -1))
+              adapter.notifyDataSetChanged()
+            }
+          }
+        }
+      }
+    })
     recycler_view_main_activity_log.adapter = adapter
 
     fetchCurrentUser()
@@ -163,34 +167,40 @@ class MainActivity : AppCompatActivity() {
       .collection("channels").document(currentUser?.currentChannel!!)
       .collection("chatLog")
 
-    chatEventListener = chatLogRef.addSnapshotListener { querySnapshot, firebaseFirestoreException ->
-      Log.d("test", "listenForChatLog")
-      querySnapshot!!.documentChanges.forEach {
-        val chatLog = it.document.toObject(ChatLog::class.java) ?: return@addSnapshotListener
-
-        when(chatLog.fromId) {
-          currentUser?.uid -> {
-            adapter.add(
-              DirectMessagesLogTo(
+    chatEventListener = chatLogRef.orderBy("timeStamp")
+      .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
+        Log.d("test", "listenForChatLog")
+        val items = mutableListOf<Item>()
+        querySnapshot!!.documentChanges.forEach {
+          val chatLog = it.document.toObject(ChatLog::class.java)
+          when(chatLog.fromId) {
+            currentUser?.uid -> {
+              items.add(DirectMessagesLogTo(
                 chatLog.text,
                 currentUser!!,
                 chatLog.timeStamp
+              ))
+            }
+            else -> {
+              items.add(
+                DirectMessagesLogFrom(
+                  chatLog.text,
+                  chatLog.fromId,
+                  chatLog.timeStamp
+                )
               )
-            )
-          }
-          else -> {
-            adapter.add(
-              DirectMessagesLogFrom(
-                chatLog.text,
-                chatLog.fromId,
-                chatLog.timeStamp
-              )
-            )
+            }
           }
         }
+        if (isInit) {
+          messageSection = Section(items)
+          adapter.add(messageSection)
+        } else {
+          messageSection.update(items)
+        }
+
+        recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
       }
-//      adapter.notifyDataSetChanged()
-    }
   }
 
   private fun setTitleForActionBar(currentCity: MyCity? = null) {
@@ -265,52 +275,53 @@ class MainActivity : AppCompatActivity() {
     Log.d("test", "fetchcities ${currentUser?.uid}")
     val adapterCity = GroupAdapter<ViewHolder>()
     val mKeys = mutableListOf<String>()
+    val userCitiesRef = FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/cities").orderByChild("timeStamp")
+    val childEventListener = object: ChildEventListener {
+      override fun onChildAdded(p0: DataSnapshot, p1: String?) {
+        val city = p0.getValue(MyCity::class.java) ?: return
 
-    FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/cities")
-      .addChildEventListener(object: ChildEventListener {
-        override fun onChildAdded(p0: DataSnapshot, p1: String?) {
-          Log.d("test", "child add fetch city")
+        adapterCity.add(CitiesRow(city, currentUser))
+        recycler_view_cities.adapter = adapterCity
+        mKeys.add(p0.key!!)
+        adapterCity.setOnItemClickListener { item, view ->
+          userCitiesRef.removeEventListener(this)
+          val cityId = (item as CitiesRow).city.id
+          chatEventListener.remove()
 
-          val city = p0.getValue(MyCity::class.java) ?: return
-          adapterCity.add(CitiesRow(city, currentUser))
-          recycler_view_cities.adapter = adapterCity
-          mKeys.add(p0.key!!)
-          adapterCity.setOnItemClickListener { item, view ->
-            val cityId = (item as CitiesRow).city.id
-            chatEventListener.remove()
+          if (cityId == currentUser?.currentCity) return@setOnItemClickListener
+          view.activity_main_cities_row_layout.setBackgroundColor(Color.LTGRAY)
+          setTitleForActionBar(item.city)
 
-            if (cityId == currentUser?.currentCity) return@setOnItemClickListener
-            view.activity_main_cities_row_layout.setBackgroundColor(Color.LTGRAY)
-            setTitleForActionBar(item.city)
+          doAsync {
+            fetchUsers(cityId)
 
-            doAsync {
-              fetchUsers(cityId)
+            FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentCity")
+              .setValue(cityId)
 
-              FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentCity")
-                .setValue(cityId)
+            FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentChannel")
+              .setValue("general")
+              .addOnCompleteListener {
+                adapter.clear()
+                fetchCurrentUser()
+              }
 
-              FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentChannel")
-                .setValue("general")
-                .addOnCompleteListener {
-                  adapter.clear()
-                  fetchCurrentUser()
-                }
-
-//              activity_main_layout.closeDrawer(GravityCompat.START)
-            }
-            adapterCity.notifyDataSetChanged()
+            activity_main_layout.closeDrawer(GravityCompat.START)
           }
+          adapterCity.notifyDataSetChanged()
+        }
 
-        }
-        override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
-        override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
-        override fun onChildRemoved(p0: DataSnapshot) {
-          val index = mKeys.indexOf(p0.key!!)
-          adapterCity.remove(adapterCity.getItem(index))
-          mKeys.removeAt(index)
-        }
-        override fun onCancelled(p0: DatabaseError) {}
-      })
+      }
+      override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
+      override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
+      override fun onChildRemoved(p0: DataSnapshot) {
+        val index = mKeys.indexOf(p0.key!!)
+        adapterCity.remove(adapterCity.getItem(index))
+        mKeys.removeAt(index)
+      }
+      override fun onCancelled(p0: DatabaseError) {}
+    }
+
+    userCitiesRef.addChildEventListener(childEventListener)
   }
 
   companion object {

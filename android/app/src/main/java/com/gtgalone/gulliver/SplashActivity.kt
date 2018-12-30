@@ -199,7 +199,8 @@ class SplashActivity : AppCompatActivity() {
                   city.id,
                   city.countryCode,
                   city.adminArea,
-                  city.locality
+                  city.locality,
+                  System.currentTimeMillis() / 1000
                 ))
 
                 changeActivity()
@@ -214,15 +215,17 @@ class SplashActivity : AppCompatActivity() {
             userRef.child("currentChannel").setValue("general")
 
             addCityIfNotExist(cityInfo, uid)
-          }
-          nextIntent.putExtra(CURRENT_CITY, MyCity(
-            cityInfo.id,
-            cityInfo.countryCode,
-            cityInfo.adminArea,
-            cityInfo.locality
-          ))
+          } else {
+            nextIntent.putExtra(CURRENT_CITY, MyCity(
+              cityInfo.id,
+              cityInfo.countryCode,
+              cityInfo.adminArea,
+              cityInfo.locality,
+              System.currentTimeMillis() / 1000
+            ))
 
-          changeActivity()
+            changeActivity()
+          }
         }
       }
   }
@@ -237,8 +240,21 @@ class SplashActivity : AppCompatActivity() {
               city.id,
               city.countryCode,
               city.adminArea,
-              city.locality
+              city.locality,
+              System.currentTimeMillis() / 1000
             ))
+          } else {
+            val myCity = p0.getValue(MyCity::class.java) ?: return
+
+            nextIntent.putExtra(CURRENT_CITY, MyCity(
+              myCity.id,
+              myCity.countryCode,
+              myCity.adminArea,
+              myCity.locality,
+              myCity.timeStamp
+            ))
+
+            changeActivity()
           }
         }
         override fun onCancelled(p0: DatabaseError) {}

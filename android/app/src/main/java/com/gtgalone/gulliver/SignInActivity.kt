@@ -100,17 +100,17 @@ class SignInActivity : AppCompatActivity() {
 
   private fun saveUserToFirebaseDatabase(displayName: String, email: String, photoUrl: String) {
     val uid = FirebaseAuth.getInstance().uid ?: ""
-    val ref = FirebaseDatabase.getInstance().getReference("/users/$uid")
-    val favoriteCityRef = ref.child("cities")
+    val userRef = FirebaseDatabase.getInstance().getReference("/users/$uid")
+    val myCityRef = userRef.child("cities")
 
     FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
       val token = it.result?.token ?: ""
 
-      val currentCity = intent.getParcelableExtra<City>(SplashActivity.CURRENT_CITY)
+      val currentCity = intent.getParcelableExtra<MyCity>(SplashActivity.CURRENT_CITY)
 
       val user = User(uid, displayName, email, photoUrl, currentCity.id, "general")
 
-      ref.limitToFirst(1)
+      userRef.limitToFirst(1)
         .addListenerForSingleValueEvent(object: ValueEventListener {
           override fun onDataChange(p0: DataSnapshot) {
 
@@ -118,15 +118,16 @@ class SignInActivity : AppCompatActivity() {
               val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
               tokenRef.setValue(true)
 
-              favoriteCityRef.orderByChild("cityId").equalTo(currentCity.id)
+              myCityRef.orderByChild("id").equalTo(currentCity.id)
                 .addListenerForSingleValueEvent(object: ValueEventListener {
                   override fun onDataChange(p0: DataSnapshot) {
                     if (!p0.hasChildren()) {
-                      favoriteCityRef.child(currentCity.id).setValue(MyCity(
+                      myCityRef.child(currentCity.id).setValue(MyCity(
                         currentCity.id,
                         currentCity.countryCode,
                         currentCity.adminArea,
-                        currentCity.locality
+                        currentCity.locality,
+                        currentCity.timeStamp
                       ))
                     }
                     changeAcitivity()
@@ -134,16 +135,17 @@ class SignInActivity : AppCompatActivity() {
                   override fun onCancelled(p0: DatabaseError) {}
                 })
             } else {
-              ref.setValue(user)
+              userRef.setValue(user)
                 .addOnCompleteListener {
                   val tokenRef = FirebaseDatabase.getInstance().getReference("/users/$uid/notificationTokens/$token")
                   tokenRef.setValue(true)
 
-                  favoriteCityRef.child(currentCity.id).setValue(MyCity(
+                  myCityRef.child(currentCity.id).setValue(MyCity(
                     currentCity.id,
                     currentCity.countryCode,
                     currentCity.adminArea,
-                    currentCity.locality
+                    currentCity.locality,
+                    currentCity.timeStamp
                   ))
 
                   changeAcitivity()

@@ -7,11 +7,11 @@ import com.google.firebase.database.ValueEventListener
 import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.models.User
 import com.squareup.picasso.Picasso
-import com.xwray.groupie.Item
-import com.xwray.groupie.ViewHolder
+import com.xwray.groupie.kotlinandroidextensions.Item
+import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.activity_direct_messages_log_from.view.*
 
-class DirectMessagesLogFrom(val text: String, val uid: String, val timeStamp: Long) : Item<ViewHolder>() {
+class DirectMessagesLogFrom(val text: String, val uid: String, val timeStamp: Long) : Item() {
   override fun bind(viewHolder: ViewHolder, position: Int) {
     viewHolder.itemView.direct_messages_log_from_text_view.text = text
     viewHolder.itemView.direct_messages_log_from_date_text_view.text = java.text.SimpleDateFormat.getInstance().format(timeStamp * 1000L)

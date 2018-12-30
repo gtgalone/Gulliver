@@ -8,11 +8,11 @@ import com.google.firebase.database.FirebaseDatabase
 import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.models.MyCity
 import com.gtgalone.gulliver.models.User
-import com.xwray.groupie.Item
-import com.xwray.groupie.ViewHolder
+import com.xwray.groupie.kotlinandroidextensions.Item
+import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.activity_main_cities_row.view.*
 
-class CitiesRow(val city: MyCity, val user: User? = null) : Item<ViewHolder>() {
+class CitiesRow(val city: MyCity, val user: User? = null) : Item() {
   override fun bind(viewHolder: ViewHolder, position: Int) {
     viewHolder.itemView.apply {
       activity_main_cities_row_locality.text = city.locality

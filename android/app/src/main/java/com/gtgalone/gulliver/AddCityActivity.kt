@@ -65,12 +65,13 @@ class AddCityActivity : AppCompatActivity() {
               .addListenerForSingleValueEvent(object: ValueEventListener {
                 override fun onDataChange(userCitiesDataSnapshot: DataSnapshot) {
                   if (!userCitiesDataSnapshot.hasChildren()) {
-                    currentUserRef.child("cities").child(citiesRow.city.id!!)
+                    currentUserRef.child("cities").child(citiesRow.city.id)
                       .setValue(MyCity(
                         citiesRow.city.id,
                         citiesRow.city.countryCode,
                         citiesRow.city.adminArea,
-                        citiesRow.city.locality
+                        citiesRow.city.locality,
+                        System.currentTimeMillis() / 1000
                       )).addOnCompleteListener {
                         finish()
                       }

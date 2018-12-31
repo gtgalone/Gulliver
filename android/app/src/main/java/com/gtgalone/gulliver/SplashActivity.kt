@@ -200,7 +200,7 @@ class SplashActivity : AppCompatActivity() {
                   city.countryCode,
                   city.adminArea,
                   city.locality,
-                  System.currentTimeMillis() / 1000
+                  System.currentTimeMillis()
                 ))
 
                 changeActivity()
@@ -221,7 +221,7 @@ class SplashActivity : AppCompatActivity() {
               cityInfo.countryCode,
               cityInfo.adminArea,
               cityInfo.locality,
-              System.currentTimeMillis() / 1000
+              System.currentTimeMillis()
             ))
 
             changeActivity()
@@ -241,7 +241,7 @@ class SplashActivity : AppCompatActivity() {
               city.countryCode,
               city.adminArea,
               city.locality,
-              System.currentTimeMillis() / 1000
+              System.currentTimeMillis()
             ))
           } else {
             val myCity = p0.getValue(MyCity::class.java) ?: return

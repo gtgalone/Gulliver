@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import com.google.firebase.database.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.gtgalone.gulliver.models.MyCity
@@ -51,6 +52,8 @@ class AddCityActivity : AppCompatActivity() {
       cityRef = cityRef.startAt(q)
     }
 
+    val toastExist = Toast.makeText(this@AddCityActivity, "Already exists", Toast.LENGTH_SHORT)
+
     cityRef.get()
       .addOnSuccessListener {
         val adapter = GroupAdapter<ViewHolder>()
@@ -60,8 +63,7 @@ class AddCityActivity : AppCompatActivity() {
           adapter.setOnItemClickListener { item, view ->
             val citiesRow = item as CitiesRow
             val currentUserRef = FirebaseDatabase.getInstance().getReference("/users/${MainActivity.currentUser?.uid}")
-            currentUserRef.child("cities")
-              .orderByChild("locality").equalTo(citiesRow.city.locality)
+            currentUserRef.child("cities").child(citiesRow.city.id)
               .addListenerForSingleValueEvent(object: ValueEventListener {
                 override fun onDataChange(userCitiesDataSnapshot: DataSnapshot) {
                   if (!userCitiesDataSnapshot.hasChildren()) {
@@ -71,10 +73,12 @@ class AddCityActivity : AppCompatActivity() {
                         citiesRow.city.countryCode,
                         citiesRow.city.adminArea,
                         citiesRow.city.locality,
-                        System.currentTimeMillis() / 1000
+                        System.currentTimeMillis()
                       )).addOnCompleteListener {
                         finish()
                       }
+                  } else {
+                    toastExist.show()
                   }
                 }
                 override fun onCancelled(p0: DatabaseError) {}

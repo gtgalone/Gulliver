@@ -100,7 +100,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
     val body = direct_messages_log_edit_text.text.toString()
 
-    val chatMessage = ChatMessage(body, fromId, toId, System.currentTimeMillis() / 1000)
+    val chatMessage = ChatMessage(body, fromId, toId, System.currentTimeMillis())
 
     fromLogRef.setValue(chatMessage).addOnSuccessListener {
       adapter.notifyDataSetChanged()

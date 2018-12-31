@@ -23,6 +23,7 @@ import com.gtgalone.gulliver.models.*
 import com.gtgalone.gulliver.views.TextMessage
 import com.gtgalone.gulliver.views.PeopleRow
 import com.gtgalone.gulliver.views.CitiesRow
+import com.gtgalone.gulliver.views.MessageLoading
 import com.squareup.picasso.Picasso
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.Section
@@ -59,11 +60,29 @@ class MainActivity : AppCompatActivity() {
         super.onScrollStateChanged(recyclerView, newState)
         when (newState) {
           RecyclerView.SCROLL_STATE_IDLE -> {
-            if ((recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition() == 0) {
-              Log.d("test", "add")
-              FirebaseDatabase.getInstance().getReference("")
-              adapter.add(0, TextMessage(ChatMessage("11", "", "", -1), currentUser!!))
-              adapter.notifyDataSetChanged()
+            Log.d("test", "idle ${(recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()}")
+            if ((recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) {
+              adapter.add(0, MessageLoading())
+              recycler_view_main_activity_log.scrollToPosition(0)
+
+              chatMessageRef.orderBy("timeStamp", Query.Direction.DESCENDING)
+                .startAfter((adapter.getItem(1) as TextMessage).message.timeStamp).limit(10).get()
+                .addOnSuccessListener {
+                  Log.d("test", "load more")
+                  if (it.documents.isEmpty()) {
+                    adapter.removeGroup(0)
+                    Log.d("test", "empty")
+                    return@addOnSuccessListener
+                  }
+                  adapter.removeGroup(0)
+                  val items = mutableListOf<Item>()
+                  it.documents.forEachReversedByIndex { docSnapshot ->
+                    Log.d("test", "add")
+                    items.add(TextMessage(docSnapshot.toObject(ChatMessage::class.java)!!, currentUser!!))
+                  }
+                  messageSection = Section(items)
+                  adapter.add(0, messageSection)
+                }
             }
           }
         }
@@ -85,6 +104,7 @@ class MainActivity : AppCompatActivity() {
         super.onDrawerOpened(drawerView)
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(drawerView.windowToken, 0)
+        main_activity_log_edit_text.clearFocus()
       }
     }
 
@@ -116,16 +136,9 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  private fun sendMessage() {
-    if (main_activity_log_edit_text.text.isEmpty()) return
-    Log.d("test", "send message")
-
-    val body = main_activity_log_edit_text.text.toString()
-
-    chatMessageRef
-      .add(ChatMessage(body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis() / 1000))
-
-    main_activity_log_edit_text.text.clear()
+  override fun onStop() {
+    main_activity_log_edit_text.clearFocus()
+    super.onStop()
   }
 
   override fun onBackPressed() {
@@ -136,6 +149,18 @@ class MainActivity : AppCompatActivity() {
     } else {
       super.onBackPressed()
     }
+  }
+
+  private fun sendMessage() {
+    if (main_activity_log_edit_text.text.isEmpty()) return
+    Log.d("test", "send message")
+
+    val body = main_activity_log_edit_text.text.toString()
+
+    chatMessageRef
+      .add(ChatMessage(body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis()))
+
+    main_activity_log_edit_text.text.clear()
   }
 
   private fun changeActivity(activity: Class<*>, reset: Boolean = true) {

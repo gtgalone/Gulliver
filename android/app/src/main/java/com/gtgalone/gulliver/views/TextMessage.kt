@@ -19,7 +19,7 @@ import kotlinx.android.synthetic.main.text_message.view.*
 class TextMessage(val message: ChatMessage, val user: User) : Item() {
   override fun bind(viewHolder: ViewHolder, position: Int) {
     viewHolder.itemView.text_message_text_view.text = message.text
-    viewHolder.itemView.text_message_date_text_view.text = java.text.SimpleDateFormat.getInstance().format(message.timeStamp * 1000L)
+    viewHolder.itemView.text_message_date_text_view.text = java.text.SimpleDateFormat.getInstance().format(message.timeStamp)
 
     val userRef = FirebaseDatabase.getInstance().getReference("/users/${message.fromId}")
     userRef.addListenerForSingleValueEvent(object: ValueEventListener {

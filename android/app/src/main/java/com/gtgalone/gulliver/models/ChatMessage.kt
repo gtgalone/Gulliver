@@ -1,5 +1,5 @@
 package com.gtgalone.gulliver.models
 
-class ChatMessage(val text: String, val fromId: String, val toId: String, val timeStamp: Long) {
-  constructor() : this("","", "", -1)
+class ChatMessage(val id: String, val text: String, val fromId: String, val toId: String, val timeStamp: Long) {
+  constructor() : this("", "","", "", -1)
 }

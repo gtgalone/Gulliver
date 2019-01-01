@@ -157,8 +157,9 @@ class MainActivity : AppCompatActivity() {
 
     val body = main_activity_log_edit_text.text.toString()
 
-    chatMessageRef
-      .add(ChatMessage(body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis()))
+    val key = chatMessageRef.document().id
+    chatMessageRef.document(key)
+      .set(ChatMessage(key, body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis()))
 
     main_activity_log_edit_text.text.clear()
   }
@@ -198,22 +199,16 @@ class MainActivity : AppCompatActivity() {
         Log.d("test", "listenForMessages")
         val items = mutableListOf<Item>()
         querySnapshot!!.documentChanges.forEachReversedByIndex {
-          val chatMessage = it.document.toObject(ChatMessage::class.java) ?: return@addSnapshotListener
+          val chatMessage = it.document.toObject(ChatMessage::class.java)
           Log.d("test", "chage ${chatMessage.text}")
           if (isInit) {
-            items.add(TextMessage(
-              chatMessage,
-              currentUser!!
-            ))
+            items.add(TextMessage(chatMessage, currentUser!!))
           } else {
-            adapter.add(
-              TextMessage(
-                chatMessage,
-                currentUser!!
-              )
-            )
-            recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
-            return@addSnapshotListener
+            if (it.type == DocumentChange.Type.ADDED) {
+              adapter.add(TextMessage(chatMessage, currentUser!!))
+              recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
+              return@addSnapshotListener
+            }
           }
         }
         if (isInit) {
@@ -221,9 +216,9 @@ class MainActivity : AppCompatActivity() {
           messageSection = Section(items)
           adapter.add(messageSection)
           isInit = false
+          recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
         }
 
-        recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
       }
   }
 

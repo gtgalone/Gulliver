@@ -79,6 +79,10 @@ class DirectMessagesLogActivity : AppCompatActivity() {
                   messageSection = Section(items)
                   adapter.add(0, messageSection)
                   isLoading = false
+                  recycler_view_direct_messages_log.apply {
+                    setHasFixedSize(true)
+                    setItemViewCacheSize(adapter!!.itemCount)
+                  }
                 }
             }
           }

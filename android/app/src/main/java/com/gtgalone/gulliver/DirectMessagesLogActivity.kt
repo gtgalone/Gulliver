@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentChange
 import com.gtgalone.gulliver.views.TextMessage
@@ -26,13 +27,14 @@ import org.jetbrains.anko.collections.forEachReversedByIndex
 class DirectMessagesLogActivity : AppCompatActivity() {
 
   private val adapter = GroupAdapter<ViewHolder>()
-  private val currentUser = MainActivity.currentUser!!
+  private val uid = FirebaseAuth.getInstance().uid!!
   private val db = FirebaseFirestore.getInstance()
 
   private lateinit var chatMessageRef: CollectionReference
   private lateinit var messageSection: Section
   private lateinit var functions: FirebaseFunctions
   private var isInit = true
+  private var isLoading = false
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -54,9 +56,11 @@ class DirectMessagesLogActivity : AppCompatActivity() {
           RecyclerView.SCROLL_STATE_IDLE -> {
             Log.d("test", "idle ${(recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()}")
             if ((recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) {
+              if (isLoading) return
               adapter.add(0, MessageLoading())
               recycler_view_direct_messages_log.scrollToPosition(0)
 
+              isLoading = true
               chatMessageRef.orderBy("timeStamp", Query.Direction.DESCENDING)
                 .startAfter((adapter.getItem(1) as TextMessage).message.timeStamp).limit(10).get()
                 .addOnSuccessListener {
@@ -70,10 +74,11 @@ class DirectMessagesLogActivity : AppCompatActivity() {
                   val items = mutableListOf<Item>()
                   it.documents.forEachReversedByIndex { docSnapshot ->
                     Log.d("test", "add")
-                    items.add(TextMessage(docSnapshot.toObject(ChatMessage::class.java)!!, currentUser!!))
+                    items.add(TextMessage(docSnapshot.toObject(ChatMessage::class.java)!!, uid))
                   }
                   messageSection = Section(items)
                   adapter.add(0, messageSection)
+                  isLoading = false
                 }
             }
           }
@@ -100,7 +105,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   }
 
   private fun listenForMessages(toUser: User) {
-    chatMessageRef = db.collection("directMessagesLog").document(currentUser.uid).collection(toUser.uid)
+    chatMessageRef = db.collection("directMessagesLog").document(uid).collection(toUser.uid)
 
     chatMessageRef.orderBy("timeStamp", Query.Direction.DESCENDING).limit(10)
       .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
@@ -108,10 +113,10 @@ class DirectMessagesLogActivity : AppCompatActivity() {
         querySnapshot!!.documentChanges.forEachReversedByIndex {
           val chatMessage = it.document.toObject(ChatMessage::class.java)
           if (isInit) {
-            items.add(TextMessage(chatMessage, currentUser))
+            items.add(TextMessage(chatMessage, uid))
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
-              adapter.add(TextMessage(chatMessage, currentUser))
+              adapter.add(TextMessage(chatMessage, uid))
               recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount - 1)
             }
           }
@@ -127,7 +132,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   }
 
   private fun sendMessage(toUser: User) {
-    val fromId = currentUser.uid
+    val fromId = uid
     val toId = toUser.uid
     if (direct_messages_log_edit_text.text.isEmpty()) return
     val body = direct_messages_log_edit_text.text.toString()
@@ -138,11 +143,10 @@ class DirectMessagesLogActivity : AppCompatActivity() {
     fromLogRef.document(fromLogKey)
       .set(ChatMessage(fromLogKey, body, fromId, toId, System.currentTimeMillis()))
 
-    val fromRef = db.collection("directMessages").document(fromId).collection(toId)
-    val fromKey = fromRef.document().id
+    val fromRef = db.collection("directMessages").document(fromId).collection("directMessage")
 
-    fromRef.document(fromKey)
-      .set(ChatMessage(fromKey, body, fromId, toId, System.currentTimeMillis()))
+    fromRef.document(toId)
+      .set(ChatMessage(toId, body, fromId, toId, System.currentTimeMillis()))
 
     if (fromId != toId) {
       val toLogRef = db.collection("directMessagesLog").document(toId).collection(fromId)
@@ -151,10 +155,9 @@ class DirectMessagesLogActivity : AppCompatActivity() {
       toLogRef.document(toLogKey)
         .set(ChatMessage(toLogKey, body, fromId, toId, System.currentTimeMillis()))
 
-      val toRef = db.collection("directMessages").document(toId).collection(fromId)
-      val toKey = toRef.document().id
+      val toRef = db.collection("directMessages").document(toId).collection("directMessage")
 
-      toRef.document(toKey).set(ChatMessage(toKey, body, fromId, toId, System.currentTimeMillis()))
+      toRef.document(fromId).set(ChatMessage(fromId, body, fromId, toId, System.currentTimeMillis()))
 
       val data = hashMapOf(
         "fromId" to fromId,

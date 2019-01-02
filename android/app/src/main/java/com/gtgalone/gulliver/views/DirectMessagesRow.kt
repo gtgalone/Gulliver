@@ -12,28 +12,32 @@ import com.squareup.picasso.Picasso
 import com.xwray.groupie.kotlinandroidextensions.Item
 import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.activity_direct_messages_row.view.*
+import java.text.SimpleDateFormat
 
-class DirectMessagesRow(private val directMessage: ChatMessage) : Item() {
-  var person: User? = null
+class DirectMessagesRow(val message: ChatMessage) : Item() {
+  var user: User? = null
   override fun bind(viewHolder: ViewHolder, position: Int) {
 
-    val personId: String
+    val uid: String
 
-    if (directMessage.fromId == MainActivity.currentUser?.uid) {
-      personId = directMessage.toId
+    if (message.fromId == MainActivity.currentUser?.uid) {
+      uid = message.toId
     } else {
-      personId = directMessage.fromId
+      uid = message.fromId
     }
 
-    val ref = FirebaseDatabase.getInstance().getReference("/users/$personId")
+    val ref = FirebaseDatabase.getInstance().getReference("/users/$uid")
 
     ref.addListenerForSingleValueEvent(object: ValueEventListener {
       override fun onDataChange(p0: DataSnapshot) {
-        person = p0.getValue(User::class.java) ?: return
+        user = p0.getValue(User::class.java) ?: return
 
-        viewHolder.itemView.direct_messages_row_display_name_text_view.text = person?.displayName
-        viewHolder.itemView.direct_messages_row_latest_message_text_view.text = directMessage.text
-        Picasso.get().load(person?.photoUrl).into(viewHolder.itemView.direct_messages_row_image_view)
+        viewHolder.itemView.apply {
+          direct_messages_row_display_name.text = user?.displayName
+          direct_messages_row_latest_message.text = message.text
+          direct_messages_row_date.text = SimpleDateFormat.getInstance().format(message.timeStamp)
+          Picasso.get().load(user?.photoUrl).into(direct_messages_row_photo)
+        }
       }
 
       override fun onCancelled(p0: DatabaseError) {

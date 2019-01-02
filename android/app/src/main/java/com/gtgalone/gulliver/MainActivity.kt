@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
                   val items = mutableListOf<Item>()
                   it.documents.forEachReversedByIndex { docSnapshot ->
                     Log.d("test", "add")
-                    items.add(TextMessage(docSnapshot.toObject(ChatMessage::class.java)!!, currentUser!!))
+                    items.add(TextMessage(docSnapshot.toObject(ChatMessage::class.java)!!, currentUser!!.uid))
                   }
                   messageSection = Section(items)
                   adapter.add(0, messageSection)
@@ -202,10 +202,10 @@ class MainActivity : AppCompatActivity() {
           val chatMessage = it.document.toObject(ChatMessage::class.java)
           Log.d("test", "chage ${chatMessage.text}")
           if (isInit) {
-            items.add(TextMessage(chatMessage, currentUser!!))
+            items.add(TextMessage(chatMessage, currentUser!!.uid))
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
-              adapter.add(TextMessage(chatMessage, currentUser!!))
+              adapter.add(TextMessage(chatMessage, currentUser!!.uid))
               recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
               return@addSnapshotListener
             }

@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
   private lateinit var chatEventListener: ListenerRegistration
   private lateinit var messageSection: Section
   private var isInit = true
+  private var isLoading = false
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -60,11 +61,12 @@ class MainActivity : AppCompatActivity() {
         super.onScrollStateChanged(recyclerView, newState)
         when (newState) {
           RecyclerView.SCROLL_STATE_IDLE -> {
-            Log.d("test", "idle ${(recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()}")
             if ((recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) {
+              if (isLoading) return
               adapter.add(0, MessageLoading())
               recycler_view_main_activity_log.scrollToPosition(0)
 
+              isLoading = true
               chatMessageRef.orderBy("timeStamp", Query.Direction.DESCENDING)
                 .startAfter((adapter.getItem(1) as TextMessage).message.timeStamp).limit(10).get()
                 .addOnSuccessListener {
@@ -82,6 +84,11 @@ class MainActivity : AppCompatActivity() {
                   }
                   messageSection = Section(items)
                   adapter.add(0, messageSection)
+                  isLoading = false
+                  recycler_view_main_activity_log.apply {
+                    setHasFixedSize(true)
+                    setItemViewCacheSize(adapter!!.itemCount)
+                  }
                 }
             }
           }
@@ -206,7 +213,11 @@ class MainActivity : AppCompatActivity() {
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
               adapter.add(TextMessage(chatMessage, currentUser!!.uid))
-              recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
+              recycler_view_main_activity_log.apply {
+                setHasFixedSize(true)
+                setItemViewCacheSize(adapter!!.itemCount)
+                scrollToPosition(adapter!!.itemCount - 1)
+              }
               return@addSnapshotListener
             }
           }
@@ -276,12 +287,11 @@ class MainActivity : AppCompatActivity() {
 
           if (user != null) adapter.add(PeopleRow(user))
           adapter.setOnItemClickListener { item, view ->
-
-            val userItem = item as PeopleRow
-
-            val intent = Intent(view.context, DirectMessagesLogActivity::class.java)
-            intent.putExtra(USER_KEY, userItem.user)
-            startActivity(intent)
+            val bundle = Bundle()
+            bundle.putParcelable(USER_KEY, (item as PeopleRow).user)
+            val peopleBottomSheetDialogFragment = PeopleBottomSheetDialogFragment()
+            peopleBottomSheetDialogFragment.arguments = bundle
+            peopleBottomSheetDialogFragment.show(supportFragmentManager, peopleBottomSheetDialogFragment.tag)
           }
         }
         recycler_view_people.adapter = adapter

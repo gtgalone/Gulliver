@@ -54,7 +54,6 @@ class DirectMessagesLogActivity : AppCompatActivity() {
         super.onScrollStateChanged(recyclerView, newState)
         when (newState) {
           RecyclerView.SCROLL_STATE_IDLE -> {
-            Log.d("test", "idle ${(recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()}")
             if ((recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) {
               if (isLoading) return
               adapter.add(0, MessageLoading())
@@ -121,7 +120,11 @@ class DirectMessagesLogActivity : AppCompatActivity() {
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
               adapter.add(TextMessage(chatMessage, uid))
-              recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount - 1)
+              recycler_view_direct_messages_log.apply {
+                setHasFixedSize(true)
+                setItemViewCacheSize(adapter!!.itemCount)
+                scrollToPosition(adapter!!.itemCount - 1)
+              }
             }
           }
         }

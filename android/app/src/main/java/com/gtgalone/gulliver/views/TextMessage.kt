@@ -107,7 +107,10 @@ class TextMessage(val message: ChatMessage, val uid: String) : Item() {
         viewHolder.itemView.apply {
           Log.d("test", "message")
           Picasso.get().setIndicatorsEnabled(true)
-          Picasso.get().load(p0.getValue(User::class.java)!!.photoUrl).placeholder(resources.getDrawable(R.drawable.background)).fit().centerCrop().into(text_message_photo)
+          Picasso.get().load(p0.getValue(User::class.java)!!.photoUrl)
+            .placeholder(resources.getDrawable(R.drawable.background))
+            .fit().centerCrop()
+            .into(text_message_photo)
         }
       }
       override fun onCancelled(p0: DatabaseError) {}

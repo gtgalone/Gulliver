@@ -38,12 +38,13 @@ import org.jetbrains.anko.collections.forEachReversedByIndex
 import org.jetbrains.anko.doAsync
 
 class MainActivity : AppCompatActivity() {
-  private val adapter = GroupAdapter<ViewHolder>()
-  private val db = FirebaseFirestore.getInstance()
-
   private lateinit var chatMessageRef: CollectionReference
   private lateinit var chatEventListener: ListenerRegistration
   private lateinit var messageSection: Section
+
+  private val adapter = GroupAdapter<ViewHolder>()
+  private val db = FirebaseFirestore.getInstance()
+  private val messagePerPage = 20L
   private var isInit = true
   private var isLoading = false
 
@@ -67,23 +68,41 @@ class MainActivity : AppCompatActivity() {
               recycler_view_main_activity_log.scrollToPosition(0)
 
               isLoading = true
-              chatMessageRef.orderBy("timeStamp", Query.Direction.DESCENDING)
-                .startAfter((adapter.getItem(1) as TextMessage).message.timeStamp).limit(10).get()
+              chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING)
+                .startAfter((messageSection.getItem(0) as TextMessage).message.timestamp).limit(messagePerPage).get()
                 .addOnSuccessListener {
-                  Log.d("test", "load more")
                   if (it.documents.isEmpty()) {
                     adapter.removeGroup(0)
-                    Log.d("test", "empty")
                     return@addOnSuccessListener
                   }
                   adapter.removeGroup(0)
                   val items = mutableListOf<Item>()
                   it.documents.forEachReversedByIndex { docSnapshot ->
-                    Log.d("test", "add")
-                    items.add(TextMessage(docSnapshot.toObject(ChatMessage::class.java)!!, currentUser!!.uid))
+                    val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
+                    val lastTopMessage = messageSection.getItem(0) as TextMessage
+                    var isPhoto = true
+                    var isTimestamp = true
+                    var isDateDivider = true
+
+                    if (items.isNotEmpty()) {
+                      val lastTextMessage = (items.last() as TextMessage)
+                      isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+
+                      if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000))
+                        lastTextMessage.setIsTimestamp(false)
+
+                      if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
+                        isDateDivider = false
+                      }
+                    }
+
+                    if ((lastTopMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
+                      isTimestamp = false
+                    }
+
+                    items.add(TextMessage(chatMessage, currentUser!!.uid, isPhoto, isTimestamp, isDateDivider))
                   }
-                  messageSection = Section(items)
-                  adapter.add(0, messageSection)
+                  messageSection.addAll(0, items)
                   isLoading = false
                   recycler_view_main_activity_log.apply {
                     setHasFixedSize(true)
@@ -201,18 +220,48 @@ class MainActivity : AppCompatActivity() {
       .collection("channels").document(currentUser?.currentChannel!!)
       .collection("chatMessages")
 
-    chatEventListener = chatMessageRef.orderBy("timeStamp", Query.Direction.DESCENDING).limit(10)
+    chatEventListener = chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(messagePerPage)
       .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
         Log.d("test", "listenForMessages")
         val items = mutableListOf<Item>()
+
         querySnapshot!!.documentChanges.forEachReversedByIndex {
+          var isDateDivider = true
+          val isTimestamp = true
+          var isPhoto = true
+
           val chatMessage = it.document.toObject(ChatMessage::class.java)
-          Log.d("test", "chage ${chatMessage.text}")
           if (isInit) {
-            items.add(TextMessage(chatMessage, currentUser!!.uid))
+            if (items.isNotEmpty()) {
+              val lastTextMessage = (items.last() as TextMessage)
+              isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+              if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
+                lastTextMessage.setIsTimestamp(false)
+              }
+              if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
+                isDateDivider = false
+              }
+            }
+            items.add(TextMessage(chatMessage, currentUser!!.uid, isPhoto, isTimestamp, isDateDivider))
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
-              adapter.add(TextMessage(chatMessage, currentUser!!.uid))
+
+              if (messageSection.itemCount > 0) {
+                val lastTextMessage = (messageSection.getItem(messageSection.itemCount - 1) as TextMessage)
+                isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+
+                if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
+                  lastTextMessage.setIsTimestamp(false)
+                  lastTextMessage.notifyChanged()
+                }
+
+                if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
+                  Log.d("test", "in divider")
+                  isDateDivider = false
+                }
+              }
+
+              messageSection.add(TextMessage(chatMessage, currentUser!!.uid, isPhoto, isTimestamp, isDateDivider))
               recycler_view_main_activity_log.apply {
                 setHasFixedSize(true)
                 setItemViewCacheSize(adapter!!.itemCount)
@@ -223,14 +272,17 @@ class MainActivity : AppCompatActivity() {
           }
         }
         if (isInit) {
-          Log.d("test", "init")
+          if (items.isNotEmpty()) (items.first() as TextMessage).setIsDateDivider(true)
+
           messageSection = Section(items)
           adapter.add(messageSection)
           isInit = false
+          recycler_view_main_activity_log.adapter = adapter
           recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
         }
 
       }
+
   }
 
   private fun setTitleForActionBar(currentCity: MyCity? = null) {
@@ -301,10 +353,9 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun fetchCities() {
-    Log.d("test", "fetchcities ${currentUser?.uid}")
     val adapterCity = GroupAdapter<ViewHolder>()
     val mKeys = mutableListOf<String>()
-    val userCitiesRef = FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/cities").orderByChild("timeStamp")
+    val userCitiesRef = FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/cities").orderByChild("timestamp")
     val childEventListener = object: ChildEventListener {
       override fun onChildAdded(p0: DataSnapshot, p1: String?) {
         val city = p0.getValue(MyCity::class.java) ?: return

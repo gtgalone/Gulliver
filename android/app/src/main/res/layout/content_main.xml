@@ -45,7 +45,7 @@
             app:srcCompat="@android:drawable/ic_menu_send"
             android:id="@+id/main_activity_log_send_button"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/main_activity_log_edit_text"
-            app:layout_constraintBottom_toBottomOf="@+id/main_activity_log_edit_text"/>
+            app:layout_constraintTop_toBottomOf="@+id/recycler_view_main_activity_log"
+            android:padding="6dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

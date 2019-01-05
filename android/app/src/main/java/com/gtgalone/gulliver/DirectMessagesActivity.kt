@@ -71,7 +71,7 @@ class DirectMessagesActivity : AppCompatActivity() {
   private fun listenForMessages() {
     val uid = FirebaseAuth.getInstance().uid
     directMessageEventListener = db.collection("directMessages").document(uid!!)
-      .collection("directMessage").orderBy("timeStamp", Query.Direction.DESCENDING)
+      .collection("directMessage").orderBy("timestamp", Query.Direction.DESCENDING)
       .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
         directMessages.clear()
         querySnapshot!!.documents.forEach { it ->

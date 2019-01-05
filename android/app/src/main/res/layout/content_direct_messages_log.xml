@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:background="@color/colorSecondary"
             android:ems="10"
-            android:hint="Enter Message"
+            android:hint="@string/enter_message"
             android:inputType="textCapSentences|textNoSuggestions|textMultiLine"
             android:minLines="1"
             android:maxLines="3"
@@ -53,6 +53,6 @@
             android:id="@+id/direct_messages_log_send_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/recycler_view_direct_messages_log"
-            android:padding="8dp" />
+            android:padding="6dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

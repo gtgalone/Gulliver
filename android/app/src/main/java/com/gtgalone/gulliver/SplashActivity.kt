@@ -251,7 +251,7 @@ class SplashActivity : AppCompatActivity() {
               myCity.countryCode,
               myCity.adminArea,
               myCity.locality,
-              myCity.timeStamp
+              myCity.timestamp
             ))
 
             changeActivity()

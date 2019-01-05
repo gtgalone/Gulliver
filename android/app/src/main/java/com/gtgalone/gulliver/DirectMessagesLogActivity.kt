@@ -60,8 +60,8 @@ class DirectMessagesLogActivity : AppCompatActivity() {
               recycler_view_direct_messages_log.scrollToPosition(0)
 
               isLoading = true
-              chatMessageRef.orderBy("timeStamp", Query.Direction.DESCENDING)
-                .startAfter((adapter.getItem(1) as TextMessage).message.timeStamp).limit(10).get()
+              chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING)
+                .startAfter((adapter.getItem(1) as TextMessage).message.timestamp).limit(10).get()
                 .addOnSuccessListener {
                   Log.d("test", "load more")
                   if (it.documents.isEmpty()) {
@@ -72,8 +72,29 @@ class DirectMessagesLogActivity : AppCompatActivity() {
                   adapter.removeGroup(0)
                   val items = mutableListOf<Item>()
                   it.documents.forEachReversedByIndex { docSnapshot ->
-                    Log.d("test", "add")
-                    items.add(TextMessage(docSnapshot.toObject(ChatMessage::class.java)!!, uid))
+                    val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
+                    val lastTopMessage = messageSection.getItem(0) as TextMessage
+                    var isPhoto = true
+                    var isTimestamp = true
+                    var isDateDivider = true
+
+                    if (items.isNotEmpty()) {
+                      val lastTextMessage = (items.last() as TextMessage)
+                      isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+
+                      if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000))
+                        lastTextMessage.setIsTimestamp(false)
+
+                      if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
+                        isDateDivider = false
+                      }
+                    }
+
+                    if ((lastTopMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
+                      isTimestamp = false
+                    }
+
+                    items.add(TextMessage(chatMessage, uid, isPhoto, isTimestamp, isDateDivider))
                   }
                   messageSection = Section(items)
                   adapter.add(0, messageSection)
@@ -110,16 +131,46 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   private fun listenForMessages(toUser: User) {
     chatMessageRef = db.collection("directMessagesLog").document(uid).collection(toUser.uid)
 
-    chatMessageRef.orderBy("timeStamp", Query.Direction.DESCENDING).limit(10)
+    chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(10)
       .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
         val items = mutableListOf<Item>()
         querySnapshot!!.documentChanges.forEachReversedByIndex {
           val chatMessage = it.document.toObject(ChatMessage::class.java)
+          var isDateDivider = true
+          val isTimestamp = true
+          var isPhoto = true
+
           if (isInit) {
-            items.add(TextMessage(chatMessage, uid))
+            if (items.isNotEmpty()) {
+              val lastTextMessage = (items.last() as TextMessage)
+              isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+              if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
+                lastTextMessage.setIsTimestamp(false)
+              }
+              if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
+                isDateDivider = false
+              }
+            }
+            items.add(TextMessage(chatMessage, uid, isPhoto, isTimestamp, isDateDivider))
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
-              adapter.add(TextMessage(chatMessage, uid))
+
+              if (messageSection.itemCount > 0) {
+                val lastTextMessage = (messageSection.getItem(messageSection.itemCount - 1) as TextMessage)
+                isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+
+                if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
+                  lastTextMessage.setIsTimestamp(false)
+                  lastTextMessage.notifyChanged()
+                }
+
+                if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
+                  Log.d("test", "in divider")
+                  isDateDivider = false
+                }
+              }
+
+              messageSection.add(TextMessage(chatMessage, uid, isPhoto, isTimestamp, isDateDivider))
               recycler_view_direct_messages_log.apply {
                 setHasFixedSize(true)
                 setItemViewCacheSize(adapter!!.itemCount)
@@ -130,9 +181,12 @@ class DirectMessagesLogActivity : AppCompatActivity() {
         }
 
         if (isInit) {
+          if (items.isNotEmpty()) (items.first() as TextMessage).setIsDateDivider(true)
+
           messageSection = Section(items)
           adapter.add(messageSection)
           isInit = false
+          recycler_view_direct_messages_log.adapter = adapter
           recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount - 1)
         }
       }

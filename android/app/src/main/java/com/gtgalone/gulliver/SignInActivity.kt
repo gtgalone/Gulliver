@@ -127,7 +127,7 @@ class SignInActivity : AppCompatActivity() {
                         currentCity.countryCode,
                         currentCity.adminArea,
                         currentCity.locality,
-                        currentCity.timeStamp
+                        currentCity.timestamp
                       ))
                     }
                     changeAcitivity()
@@ -145,7 +145,7 @@ class SignInActivity : AppCompatActivity() {
                     currentCity.countryCode,
                     currentCity.adminArea,
                     currentCity.locality,
-                    currentCity.timeStamp
+                    currentCity.timestamp
                   ))
 
                   changeAcitivity()

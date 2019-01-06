@@ -301,7 +301,7 @@ class MainActivity : AppCompatActivity() {
           }
         }
         if (isInit) {
-          adapter.add(DateDivider((items.first() as TextMessage).message.timestamp))
+          if (items.isNotEmpty()) adapter.add(DateDivider((items.first() as TextMessage).message.timestamp))
 
           messageSection = Section(items)
           adapter.add(messageSection)

@@ -70,6 +70,14 @@ class SignInActivity : AppCompatActivity() {
     super.onActivityResult(requestCode, resultCode, data)
     Log.d(TAG, requestCode.toString())
     if (requestCode == RC_SIGN_IN) {
+//      error
+//      java.lang.RuntimeException: Failure delivering result ResultInfo{who=null, request=0, result=0, data=Intent { (has extras) }} to activity {com.gtgalone.gulliver/com.gtgalone.gulliver.SignInActivity}: com.google.android.gms.tasks.RuntimeExecutionException: com.google.android.gms.common.api.ApiException: 16:
+//      at android.app.ActivityThread.deliverResults(ActivityThread.java:4058)
+
+//      2 lines
+//      val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+//      val account = task.result!!
+
       val task = GoogleSignIn.getSignedInAccountFromIntent(data)
       try {
         val account = task.result!!

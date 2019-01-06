@@ -69,6 +69,7 @@ class MainActivity : AppCompatActivity() {
 
               isLoading = true
               val lastTopItem = (messageSection.getItem(0) as TextMessage)
+
               chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING)
                 .startAfter(lastTopItem.message.timestamp).limit(messagePerPage).get()
                 .addOnSuccessListener {
@@ -86,9 +87,7 @@ class MainActivity : AppCompatActivity() {
                     val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
 
                     if (lastItem == null && it.documents.count() < messagePerPage) {
-                      val nextTextMessage = it.documents[it.documents.count() - 2].toObject(ChatMessage::class.java)
-                      val isTimestamp = !CompareHelper.isSameMinute(nextTextMessage!!.timestamp, chatMessage.timestamp)
-                      lastItem = TextMessage(chatMessage, currentUser!!.uid, true, isTimestamp)
+                      lastItem = TextMessage(chatMessage, currentUser!!.uid, true, true)
                       items.add(lastItem!!)
 
                       return@forEachReversedByIndex

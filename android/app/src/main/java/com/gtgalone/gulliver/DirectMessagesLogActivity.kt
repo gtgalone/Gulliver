@@ -59,6 +59,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
           RecyclerView.SCROLL_STATE_IDLE -> {
             if ((recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) {
               if (isLoading) return
+
               adapter.add(0, MessageLoading())
               recycler_view_direct_messages_log.scrollToPosition(0)
 
@@ -82,9 +83,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
                     val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
 
                     if (lastItem == null && it.documents.count() < messagePerPage) {
-                      val nextTextMessage = it.documents[it.documents.count() - 2].toObject(ChatMessage::class.java)
-                      val isTimestamp = !CompareHelper.isSameMinute(nextTextMessage!!.timestamp, chatMessage.timestamp)
-                      lastItem = TextMessage(chatMessage, uid, true, isTimestamp)
+                      lastItem = TextMessage(chatMessage, uid, true, true)
                       items.add(lastItem!!)
 
                       return@forEachReversedByIndex

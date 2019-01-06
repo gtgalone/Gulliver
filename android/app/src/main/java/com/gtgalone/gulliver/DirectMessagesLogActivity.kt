@@ -14,7 +14,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.gson.Gson
+import com.gtgalone.gulliver.helper.CompareHelper
 import com.gtgalone.gulliver.models.ChatMessage
+import com.gtgalone.gulliver.views.DateDivider
 import com.gtgalone.gulliver.views.MessageLoading
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.Section
@@ -33,6 +35,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   private lateinit var chatMessageRef: CollectionReference
   private lateinit var messageSection: Section
   private lateinit var functions: FirebaseFunctions
+  private val messagePerPage = 21L
   private var isInit = true
   private var isLoading = false
 
@@ -60,47 +63,67 @@ class DirectMessagesLogActivity : AppCompatActivity() {
               recycler_view_direct_messages_log.scrollToPosition(0)
 
               isLoading = true
+              val lastTopItem = messageSection.getItem(0) as TextMessage
+
               chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING)
-                .startAfter((adapter.getItem(1) as TextMessage).message.timestamp).limit(10).get()
+                .startAfter(lastTopItem.message.timestamp).limit(messagePerPage).get()
                 .addOnSuccessListener {
-                  Log.d("test", "load more")
                   if (it.documents.isEmpty()) {
                     adapter.removeGroup(0)
-                    Log.d("test", "empty")
                     return@addOnSuccessListener
                   }
                   adapter.removeGroup(0)
+
                   val items = mutableListOf<Item>()
+                  val headDateDivider = (adapter.getItem(0) as DateDivider)
+                  var lastItem: TextMessage? = null
+
                   it.documents.forEachReversedByIndex { docSnapshot ->
                     val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
-                    val lastTopMessage = messageSection.getItem(0) as TextMessage
-                    var isPhoto = true
-                    var isTimestamp = true
-                    var isDateDivider = true
 
-                    if (items.isNotEmpty()) {
-                      val lastTextMessage = (items.last() as TextMessage)
-                      isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+                    if (lastItem == null && it.documents.count() < messagePerPage) {
+                      val nextTextMessage = it.documents[it.documents.count() - 2].toObject(ChatMessage::class.java)
+                      val isTimestamp = !CompareHelper.isSameMinute(nextTextMessage!!.timestamp, chatMessage.timestamp)
+                      lastItem = TextMessage(chatMessage, uid, true, isTimestamp)
+                      items.add(lastItem!!)
 
-                      if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000))
-                        lastTextMessage.setIsTimestamp(false)
+                      return@forEachReversedByIndex
+                    } else if (lastItem == null) {
+                      lastItem = TextMessage(chatMessage, "")
 
-                      if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
-                        isDateDivider = false
-                      }
+                      return@forEachReversedByIndex
                     }
 
-                    if ((lastTopMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
-                      isTimestamp = false
+                    var isPhoto = lastItem!!.message.fromId != chatMessage.fromId
+
+                    if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+                      lastItem!!.setIsTimestamp(false)
+                      lastItem!!.notifyChanged()
                     }
 
-                    items.add(TextMessage(chatMessage, uid, isPhoto, isTimestamp, isDateDivider))
+                    if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+                      items.add(DateDivider(chatMessage.timestamp))
+                      isPhoto = true
+                    }
+
+                    lastItem = TextMessage(chatMessage, uid, isPhoto, true)
+
+                    items.add(lastItem!!)
                   }
-                  messageSection = Section(items)
-                  adapter.add(0, messageSection)
+
+                  if (items.isNotEmpty()) {
+                    val currentTopMessage = items.first() as TextMessage
+                    headDateDivider.setTimestamp(currentTopMessage.message.timestamp)
+                    headDateDivider.notifyChanged()
+
+                    val currentBottomMessage = items.last() as TextMessage
+                    currentBottomMessage.setIsTimestamp(!CompareHelper.isSameMinute(lastTopItem.message.timestamp, currentBottomMessage.message.timestamp))
+                    currentBottomMessage.notifyChanged()
+                  }
+
+                  messageSection.addAll(0, items)
                   isLoading = false
                   recycler_view_direct_messages_log.apply {
-                    setHasFixedSize(true)
                     setItemViewCacheSize(adapter!!.itemCount)
                   }
                 }
@@ -131,63 +154,76 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   private fun listenForMessages(toUser: User) {
     chatMessageRef = db.collection("directMessagesLog").document(uid).collection(toUser.uid)
 
-    chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(10)
+    chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(messagePerPage)
       .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
         val items = mutableListOf<Item>()
-        querySnapshot!!.documentChanges.forEachReversedByIndex {
+        var lastItem: TextMessage? = null
+
+        querySnapshot!!.documentChanges.forEachReversedByIndex { it ->
           val chatMessage = it.document.toObject(ChatMessage::class.java)
-          var isDateDivider = true
-          val isTimestamp = true
-          var isPhoto = true
+          var isPhoto = false
 
           if (isInit) {
-            if (items.isNotEmpty()) {
-              val lastTextMessage = (items.last() as TextMessage)
-              isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
-              if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
-                lastTextMessage.setIsTimestamp(false)
-              }
-              if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
-                isDateDivider = false
-              }
+
+            if (lastItem == null) {
+              lastItem = TextMessage(chatMessage, "")
+              return@forEachReversedByIndex
             }
-            items.add(TextMessage(chatMessage, uid, isPhoto, isTimestamp, isDateDivider))
+
+            isPhoto = lastItem!!.message.fromId != chatMessage.fromId
+
+            if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+              lastItem!!.setIsTimestamp(false)
+              lastItem!!.notifyChanged()
+            }
+
+            if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+              items.add(DateDivider(chatMessage.timestamp))
+              isPhoto = true
+            }
+
+            lastItem = TextMessage(chatMessage, uid, isPhoto, true)
+
+            items.add(lastItem!!)
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
 
               if (messageSection.itemCount > 0) {
-                val lastTextMessage = (messageSection.getItem(messageSection.itemCount - 1) as TextMessage)
-                isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+                lastItem = messageSection.getItem(messageSection.itemCount - 1) as TextMessage
 
-                if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
-                  lastTextMessage.setIsTimestamp(false)
-                  lastTextMessage.notifyChanged()
+                isPhoto = lastItem!!.message.fromId != chatMessage.fromId
+
+                if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+                  lastItem!!.setIsTimestamp(false)
+                  lastItem!!.notifyChanged()
                 }
 
-                if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
-                  Log.d("test", "in divider")
-                  isDateDivider = false
+                if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+                  messageSection.add(DateDivider(chatMessage.timestamp))
                 }
               }
 
-              messageSection.add(TextMessage(chatMessage, uid, isPhoto, isTimestamp, isDateDivider))
+              messageSection.add(TextMessage(chatMessage, uid, isPhoto, true))
               recycler_view_direct_messages_log.apply {
-                setHasFixedSize(true)
                 setItemViewCacheSize(adapter!!.itemCount)
                 scrollToPosition(adapter!!.itemCount - 1)
               }
+              return@addSnapshotListener
             }
           }
         }
-
         if (isInit) {
-          if (items.isNotEmpty()) (items.first() as TextMessage).setIsDateDivider(true)
+          adapter.add(DateDivider((items.first() as TextMessage).message.timestamp))
 
           messageSection = Section(items)
           adapter.add(messageSection)
           isInit = false
-          recycler_view_direct_messages_log.adapter = adapter
-          recycler_view_direct_messages_log.scrollToPosition(adapter.itemCount - 1)
+          recycler_view_direct_messages_log.apply {
+            setHasFixedSize(true)
+            adapter = adapter
+            setItemViewCacheSize(adapter!!.itemCount)
+            scrollToPosition(adapter!!.itemCount - 1)
+          }
         }
       }
   }

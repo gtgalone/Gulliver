@@ -19,11 +19,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.Query
+import com.gtgalone.gulliver.helper.CompareHelper
 import com.gtgalone.gulliver.models.*
-import com.gtgalone.gulliver.views.TextMessage
-import com.gtgalone.gulliver.views.PeopleRow
-import com.gtgalone.gulliver.views.CitiesRow
-import com.gtgalone.gulliver.views.MessageLoading
+import com.gtgalone.gulliver.views.*
 import com.squareup.picasso.Picasso
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.Section
@@ -35,6 +33,7 @@ import kotlinx.android.synthetic.main.activity_main_cities_row.view.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import org.jetbrains.anko.collections.forEachReversedByIndex
+import org.jetbrains.anko.collections.forEachReversedWithIndex
 import org.jetbrains.anko.doAsync
 
 class MainActivity : AppCompatActivity() {
@@ -44,7 +43,7 @@ class MainActivity : AppCompatActivity() {
 
   private val adapter = GroupAdapter<ViewHolder>()
   private val db = FirebaseFirestore.getInstance()
-  private val messagePerPage = 20L
+  private val messagePerPage = 21L
   private var isInit = true
   private var isLoading = false
 
@@ -64,48 +63,71 @@ class MainActivity : AppCompatActivity() {
           RecyclerView.SCROLL_STATE_IDLE -> {
             if ((recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) {
               if (isLoading) return
+
               adapter.add(0, MessageLoading())
               recycler_view_main_activity_log.scrollToPosition(0)
 
               isLoading = true
+              val lastTopItem = (messageSection.getItem(0) as TextMessage)
               chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING)
-                .startAfter((messageSection.getItem(0) as TextMessage).message.timestamp).limit(messagePerPage).get()
+                .startAfter(lastTopItem.message.timestamp).limit(messagePerPage).get()
                 .addOnSuccessListener {
                   if (it.documents.isEmpty()) {
                     adapter.removeGroup(0)
                     return@addOnSuccessListener
                   }
                   adapter.removeGroup(0)
+
                   val items = mutableListOf<Item>()
+                  val headDateDivider = (adapter.getItem(0) as DateDivider)
+                  var lastItem: TextMessage? = null
+
                   it.documents.forEachReversedByIndex { docSnapshot ->
                     val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
-                    val lastTopMessage = messageSection.getItem(0) as TextMessage
-                    var isPhoto = true
-                    var isTimestamp = true
-                    var isDateDivider = true
 
-                    if (items.isNotEmpty()) {
-                      val lastTextMessage = (items.last() as TextMessage)
-                      isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+                    if (lastItem == null && it.documents.count() < messagePerPage) {
+                      val nextTextMessage = it.documents[it.documents.count() - 2].toObject(ChatMessage::class.java)
+                      val isTimestamp = !CompareHelper.isSameMinute(nextTextMessage!!.timestamp, chatMessage.timestamp)
+                      lastItem = TextMessage(chatMessage, currentUser!!.uid, true, isTimestamp)
+                      items.add(lastItem!!)
 
-                      if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000))
-                        lastTextMessage.setIsTimestamp(false)
+                      return@forEachReversedByIndex
+                    } else if (lastItem == null) {
+                      lastItem = TextMessage(chatMessage, "")
 
-                      if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
-                        isDateDivider = false
-                      }
+                      return@forEachReversedByIndex
                     }
 
-                    if ((lastTopMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
-                      isTimestamp = false
+                    var isPhoto = lastItem!!.message.fromId != chatMessage.fromId
+
+                    if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+                      lastItem!!.setIsTimestamp(false)
+                      lastItem!!.notifyChanged()
                     }
 
-                    items.add(TextMessage(chatMessage, currentUser!!.uid, isPhoto, isTimestamp, isDateDivider))
+                    if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+                      items.add(DateDivider(chatMessage.timestamp))
+                      isPhoto = true
+                    }
+
+                    lastItem = TextMessage(chatMessage, currentUser!!.uid, isPhoto, true)
+
+                    items.add(lastItem!!)
                   }
+
+                  if (items.isNotEmpty()) {
+                    val currentTopMessage = items.first() as TextMessage
+                    headDateDivider.setTimestamp(currentTopMessage.message.timestamp)
+                    headDateDivider.notifyChanged()
+
+                    val currentBottomMessage = items.last() as TextMessage
+                    currentBottomMessage.setIsTimestamp(!CompareHelper.isSameMinute(lastTopItem.message.timestamp, currentBottomMessage.message.timestamp))
+                    currentBottomMessage.notifyChanged()
+                  }
+
                   messageSection.addAll(0, items)
                   isLoading = false
                   recycler_view_main_activity_log.apply {
-                    setHasFixedSize(true)
                     setItemViewCacheSize(adapter!!.itemCount)
                   }
                 }
@@ -224,46 +246,54 @@ class MainActivity : AppCompatActivity() {
       .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
         Log.d("test", "listenForMessages")
         val items = mutableListOf<Item>()
+        var lastItem: TextMessage? = null
 
-        querySnapshot!!.documentChanges.forEachReversedByIndex {
-          var isDateDivider = true
-          val isTimestamp = true
-          var isPhoto = true
-
+        querySnapshot!!.documentChanges.forEachReversedByIndex { it ->
           val chatMessage = it.document.toObject(ChatMessage::class.java)
+          var isPhoto = false
+
           if (isInit) {
-            if (items.isNotEmpty()) {
-              val lastTextMessage = (items.last() as TextMessage)
-              isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
-              if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
-                lastTextMessage.setIsTimestamp(false)
-              }
-              if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
-                isDateDivider = false
-              }
+
+            if (lastItem == null) {
+              lastItem = TextMessage(chatMessage, "")
+              return@forEachReversedByIndex
             }
-            items.add(TextMessage(chatMessage, currentUser!!.uid, isPhoto, isTimestamp, isDateDivider))
+
+            isPhoto = lastItem!!.message.fromId != chatMessage.fromId
+
+            if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+              lastItem!!.setIsTimestamp(false)
+              lastItem!!.notifyChanged()
+            }
+
+            if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+              items.add(DateDivider(chatMessage.timestamp))
+              isPhoto = true
+            }
+
+            lastItem = TextMessage(chatMessage, currentUser!!.uid, isPhoto, true)
+
+            items.add(lastItem!!)
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
 
               if (messageSection.itemCount > 0) {
-                val lastTextMessage = (messageSection.getItem(messageSection.itemCount - 1) as TextMessage)
-                isPhoto = lastTextMessage.message.fromId != chatMessage.fromId
+                lastItem = messageSection.getItem(messageSection.itemCount - 1) as TextMessage
 
-                if ((lastTextMessage.message.timestamp / 60000) == (chatMessage.timestamp / 60000)) {
-                  lastTextMessage.setIsTimestamp(false)
-                  lastTextMessage.notifyChanged()
+                isPhoto = lastItem!!.message.fromId != chatMessage.fromId
+
+                if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+                  lastItem!!.setIsTimestamp(false)
+                  lastItem!!.notifyChanged()
                 }
 
-                if ((lastTextMessage.message.timestamp / (1000 * 60 * 60 * 24)) == (chatMessage.timestamp / (1000 * 60 * 60 * 24))) {
-                  Log.d("test", "in divider")
-                  isDateDivider = false
+                if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
+                  messageSection.add(DateDivider(chatMessage.timestamp))
                 }
               }
 
-              messageSection.add(TextMessage(chatMessage, currentUser!!.uid, isPhoto, isTimestamp, isDateDivider))
+              messageSection.add(TextMessage(chatMessage, currentUser!!.uid, isPhoto, true))
               recycler_view_main_activity_log.apply {
-                setHasFixedSize(true)
                 setItemViewCacheSize(adapter!!.itemCount)
                 scrollToPosition(adapter!!.itemCount - 1)
               }
@@ -272,13 +302,17 @@ class MainActivity : AppCompatActivity() {
           }
         }
         if (isInit) {
-          if (items.isNotEmpty()) (items.first() as TextMessage).setIsDateDivider(true)
+          adapter.add(DateDivider((items.first() as TextMessage).message.timestamp))
 
           messageSection = Section(items)
           adapter.add(messageSection)
           isInit = false
-          recycler_view_main_activity_log.adapter = adapter
-          recycler_view_main_activity_log.scrollToPosition(adapter.itemCount - 1)
+          recycler_view_main_activity_log.apply {
+            setHasFixedSize(true)
+            adapter = adapter
+            setItemViewCacheSize(adapter!!.itemCount)
+            scrollToPosition(adapter!!.itemCount - 1)
+          }
         }
 
       }
@@ -365,6 +399,7 @@ class MainActivity : AppCompatActivity() {
         mKeys.add(p0.key!!)
         adapterCity.setOnItemClickListener { item, view ->
           isInit = true
+          isLoading = false
           userCitiesRef.removeEventListener(this)
           val cityId = (item as CitiesRow).city.id
           chatEventListener.remove()

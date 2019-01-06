@@ -208,7 +208,6 @@ class SplashActivity : AppCompatActivity() {
             }
           }
         } else {
-          Log.d("test", "else")
           val cityInfo = it.documents.first().toObject(City::class.java) ?: return@addOnSuccessListener
           if (uid != null) {
             userRef.child("currentCity").setValue(cityInfo.id)

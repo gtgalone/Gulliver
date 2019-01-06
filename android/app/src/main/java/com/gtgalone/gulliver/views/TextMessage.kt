@@ -21,9 +21,8 @@ import java.text.SimpleDateFormat
 class TextMessage(
   val message: ChatMessage,
   val uid: String,
-  val isPhoto: Boolean = false,
-  var isTimestamp: Boolean = false,
-  var isDateDivider: Boolean = false
+  private var isPhoto: Boolean = false,
+  var isTimestamp: Boolean = false
 ) : Item() {
   override fun bind(viewHolder: ViewHolder, position: Int) {
     viewHolder.itemView.apply {
@@ -31,11 +30,6 @@ class TextMessage(
       if (isTimestamp) {
         text_message_date.text = SimpleDateFormat.getTimeInstance().format(message.timestamp)
         text_message_date.visibility = View.VISIBLE
-      }
-
-      if (isDateDivider) {
-        text_message_date_divider.text = SimpleDateFormat.getDateInstance().format(message.timestamp)
-        text_message_date_divider.visibility = View.VISIBLE
       }
 
       val constraintSet = ConstraintSet()
@@ -67,8 +61,7 @@ class TextMessage(
           R.id.text_message_date,
           ConstraintSet.START,
           R.id.text_message_message,
-          ConstraintSet.START,
-          24
+          ConstraintSet.START
         )
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
@@ -100,8 +93,7 @@ class TextMessage(
           R.id.text_message_date,
           ConstraintSet.END,
           R.id.text_message_message,
-          ConstraintSet.END,
-          24
+          ConstraintSet.END
         )
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
@@ -144,9 +136,5 @@ class TextMessage(
 
   fun setIsTimestamp(isTimestamp: Boolean) {
     this.isTimestamp = isTimestamp
-  }
-
-  fun setIsDateDivider(isDateDivider: Boolean) {
-    this.isDateDivider = isDateDivider
   }
 }

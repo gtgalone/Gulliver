@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 class TextMessage(
   val message: ChatMessage,
   val uid: String,
-  private var isPhoto: Boolean = false,
+  var isPhoto: Boolean = false,
   var isTimestamp: Boolean = false
 ) : Item() {
   override fun bind(viewHolder: ViewHolder, position: Int) {
@@ -110,7 +110,6 @@ class TextMessage(
       userRef.addListenerForSingleValueEvent(object: ValueEventListener {
         override fun onDataChange(p0: DataSnapshot) {
           viewHolder.itemView.apply {
-            Picasso.get().setIndicatorsEnabled(true)
             Picasso.get().load(p0.getValue(User::class.java)!!.photoUrl)
               .placeholder(resources.getDrawable(R.drawable.background))
               .fit().centerCrop()
@@ -126,15 +125,9 @@ class TextMessage(
     return R.layout.text_message
   }
 
-  override fun isSameAs(other: com.xwray.groupie.Item<*>?): Boolean {
-    if (other !is TextMessage)
-      return false
-    if (this.message.text != other.message.text)
-      return false
-    return true
-  }
-
   fun setIsTimestamp(isTimestamp: Boolean) {
-    this.isTimestamp = isTimestamp
+    if (this.isTimestamp) {
+      this.isTimestamp = isTimestamp
+    }
   }
 }

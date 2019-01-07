@@ -287,13 +287,18 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
-                  messageSection.add(DateDivider(chatMessage.timestamp))
+                  adapter.add(DateDivider(chatMessage.timestamp))
                 }
+              } else {
+                Log.d("test", "less than 0 ")
+                messageSection.add(DateDivider(chatMessage.timestamp))
+                isPhoto = true
               }
 
               messageSection.add(TextMessage(chatMessage, currentUser!!.uid, isPhoto, true))
               recycler_view_main_activity_log.apply {
-                setItemViewCacheSize(adapter!!.itemCount)
+                this.adapter = adapter
+                setItemViewCacheSize(adapter!!.itemCount - 1)
                 scrollToPosition(adapter!!.itemCount - 1)
               }
               return@addSnapshotListener

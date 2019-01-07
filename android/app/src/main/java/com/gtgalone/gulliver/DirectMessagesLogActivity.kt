@@ -58,12 +58,17 @@ class DirectMessagesLogActivity : AppCompatActivity() {
         when (newState) {
           RecyclerView.SCROLL_STATE_IDLE -> {
             if ((recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) {
-              if (isLoading) return
+              if (
+                isLoading or
+                (messageSection.itemCount == 0) or
+                (messageSection.getItem(0) is DateDivider)
+              ) return
 
               adapter.add(0, MessageLoading())
               recycler_view_direct_messages_log.scrollToPosition(0)
 
               isLoading = true
+
               val lastTopItem = messageSection.getItem(0) as TextMessage
 
               chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING)
@@ -101,7 +106,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
                     }
 
                     if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
-                      items.add(DateDivider(chatMessage.timestamp))
+                      adapter.add(DateDivider(chatMessage.timestamp))
                       isPhoto = true
                     }
 
@@ -163,8 +168,13 @@ class DirectMessagesLogActivity : AppCompatActivity() {
           var isPhoto = false
 
           if (isInit) {
+            Log.d("test", "${querySnapshot.documentChanges.count()}")
+            if (lastItem == null && querySnapshot.documentChanges.count() < messagePerPage) {
+              lastItem = TextMessage(chatMessage, uid, true, true)
+              items.add(lastItem!!)
 
-            if (lastItem == null) {
+              return@forEachReversedByIndex
+            } else if (lastItem == null) {
               lastItem = TextMessage(chatMessage, "")
               return@forEachReversedByIndex
             }
@@ -173,7 +183,6 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
             if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
               lastItem!!.setIsTimestamp(false)
-              lastItem!!.notifyChanged()
             }
 
             if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
@@ -200,11 +209,16 @@ class DirectMessagesLogActivity : AppCompatActivity() {
                 if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
                   messageSection.add(DateDivider(chatMessage.timestamp))
                 }
+              } else {
+                Log.d("test", "less than 0 ")
+                messageSection.add(DateDivider(chatMessage.timestamp))
+                isPhoto = true
               }
 
               messageSection.add(TextMessage(chatMessage, uid, isPhoto, true))
               recycler_view_direct_messages_log.apply {
-                setItemViewCacheSize(adapter!!.itemCount)
+                adapter = adapter
+                setItemViewCacheSize(adapter!!.itemCount - 1)
                 scrollToPosition(adapter!!.itemCount - 1)
               }
               return@addSnapshotListener

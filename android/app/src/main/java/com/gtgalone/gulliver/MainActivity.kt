@@ -199,8 +199,7 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun sendMessage() {
-    if (main_activity_log_edit_text.text.isEmpty()) return
-    Log.d("test", "send message")
+    if (main_activity_log_edit_text.text.trim().isEmpty()) return
 
     val body = main_activity_log_edit_text.text.toString()
 

@@ -217,7 +217,6 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
               messageSection.add(TextMessage(chatMessage, uid, isPhoto, true))
               recycler_view_direct_messages_log.apply {
-                adapter = adapter
                 setItemViewCacheSize(adapter!!.itemCount - 1)
                 scrollToPosition(adapter!!.itemCount - 1)
               }
@@ -244,7 +243,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   private fun sendMessage(toUser: User) {
     val fromId = uid
     val toId = toUser.uid
-    if (direct_messages_log_edit_text.text.isEmpty()) return
+    if (direct_messages_log_edit_text.text.trim().isEmpty()) return
     val body = direct_messages_log_edit_text.text.toString()
 
     val fromLogRef = db.collection("directMessagesLog").document(fromId).collection(toId)

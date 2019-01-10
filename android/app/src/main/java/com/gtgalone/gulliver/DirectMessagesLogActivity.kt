@@ -28,16 +28,10 @@ import org.jetbrains.anko.collections.forEachReversedByIndex
 
 class DirectMessagesLogActivity : AppCompatActivity() {
 
-  private val adapter = GroupAdapter<ViewHolder>()
   private val uid = FirebaseAuth.getInstance().uid!!
   private val db = FirebaseFirestore.getInstance()
 
-  private lateinit var chatMessageRef: CollectionReference
-  private lateinit var messageSection: Section
   private lateinit var functions: FirebaseFunctions
-  private val messagePerPage = 21L
-  private var isInit = true
-  private var isLoading = false
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -52,98 +46,21 @@ class DirectMessagesLogActivity : AppCompatActivity() {
       toUser = Gson().fromJson(bundle?.getString("toUser"), User::class.java)
     }
 
-    recycler_view_direct_messages_log.addOnScrollListener(object: RecyclerView.OnScrollListener() {
-      override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-        super.onScrollStateChanged(recyclerView, newState)
-        when (newState) {
-          RecyclerView.SCROLL_STATE_IDLE -> {
-            if ((recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) {
-              if (
-                isLoading or
-                (messageSection.itemCount == 0) or
-                (messageSection.getItem(0) is DateDivider)
-              ) return
-
-              adapter.add(0, MessageLoading())
-              recycler_view_direct_messages_log.scrollToPosition(0)
-
-              isLoading = true
-
-              val lastTopItem = messageSection.getItem(0) as TextMessage
-
-              chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING)
-                .startAfter(lastTopItem.message.timestamp).limit(messagePerPage).get()
-                .addOnSuccessListener {
-                  if (it.documents.isEmpty()) {
-                    adapter.removeGroup(0)
-                    return@addOnSuccessListener
-                  }
-                  adapter.removeGroup(0)
-
-                  val items = mutableListOf<Item>()
-                  val headDateDivider = (adapter.getItem(0) as DateDivider)
-                  var lastItem: TextMessage? = null
-
-                  it.documents.forEachReversedByIndex { docSnapshot ->
-                    val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
-
-                    if (lastItem == null && it.documents.count() < messagePerPage) {
-                      lastItem = TextMessage(chatMessage, uid, true, true)
-                      items.add(lastItem!!)
-
-                      return@forEachReversedByIndex
-                    } else if (lastItem == null) {
-                      lastItem = TextMessage(chatMessage, "")
-
-                      return@forEachReversedByIndex
-                    }
-
-                    var isPhoto = lastItem!!.message.fromId != chatMessage.fromId
-
-                    if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
-                      lastItem!!.setIsTimestamp(false)
-                      lastItem!!.notifyChanged()
-                    }
-
-                    if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
-                      adapter.add(DateDivider(chatMessage.timestamp))
-                      isPhoto = true
-                    }
-
-                    lastItem = TextMessage(chatMessage, uid, isPhoto, true)
-
-                    items.add(lastItem!!)
-                  }
-
-                  if (items.isNotEmpty()) {
-                    val currentTopMessage = items.first() as TextMessage
-                    headDateDivider.setTimestamp(currentTopMessage.message.timestamp)
-                    headDateDivider.notifyChanged()
-
-                    val currentBottomMessage = items.last() as TextMessage
-                    currentBottomMessage.setIsTimestamp(!CompareHelper.isSameMinute(lastTopItem.message.timestamp, currentBottomMessage.message.timestamp))
-                    currentBottomMessage.notifyChanged()
-                  }
-
-                  messageSection.addAll(0, items)
-                  isLoading = false
-                  recycler_view_direct_messages_log.apply {
-                    setItemViewCacheSize(adapter!!.itemCount)
-                  }
-                }
-            }
-          }
-        }
+    if (savedInstanceState == null) {
+      val recyclerViewFragment = RecyclerViewFragment()
+      val bundle = Bundle()
+      bundle.putParcelable(MainActivity.USER_KEY, toUser)
+      recyclerViewFragment.arguments = bundle
+      supportFragmentManager.beginTransaction().run {
+        replace(R.id.fragment_recycler_view_direct_messages_log, recyclerViewFragment)
+        commit()
       }
-    })
-    recycler_view_direct_messages_log.adapter = adapter
+    }
 
     functions = FirebaseFunctions.getInstance()
 
     supportActionBar!!.title = toUser.displayName
     supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-
-    listenForMessages(toUser)
 
     direct_messages_log_send_button.setOnClickListener {
       sendMessage(toUser)
@@ -153,91 +70,6 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   override fun onSupportNavigateUp(): Boolean {
     finish()
     return super.onSupportNavigateUp()
-  }
-
-  private fun listenForMessages(toUser: User) {
-    chatMessageRef = db.collection("directMessagesLog").document(uid).collection(toUser.uid)
-
-    chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(messagePerPage)
-      .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
-        val items = mutableListOf<Item>()
-        var lastItem: TextMessage? = null
-
-        querySnapshot!!.documentChanges.forEachReversedByIndex { it ->
-          val chatMessage = it.document.toObject(ChatMessage::class.java)
-          var isPhoto = false
-
-          if (isInit) {
-            Log.d("test", "${querySnapshot.documentChanges.count()}")
-            if (lastItem == null && querySnapshot.documentChanges.count() < messagePerPage) {
-              lastItem = TextMessage(chatMessage, uid, true, true)
-              items.add(lastItem!!)
-
-              return@forEachReversedByIndex
-            } else if (lastItem == null) {
-              lastItem = TextMessage(chatMessage, "")
-              return@forEachReversedByIndex
-            }
-
-            isPhoto = lastItem!!.message.fromId != chatMessage.fromId
-
-            if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
-              lastItem!!.setIsTimestamp(false)
-            }
-
-            if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
-              items.add(DateDivider(chatMessage.timestamp))
-              isPhoto = true
-            }
-
-            lastItem = TextMessage(chatMessage, uid, isPhoto, true)
-
-            items.add(lastItem!!)
-          } else {
-            if (it.type == DocumentChange.Type.ADDED) {
-
-              if (messageSection.itemCount > 0) {
-                lastItem = messageSection.getItem(messageSection.itemCount - 1) as TextMessage
-
-                isPhoto = lastItem!!.message.fromId != chatMessage.fromId
-
-                if (CompareHelper.isSameMinute(lastItem!!.message.timestamp, chatMessage.timestamp)) {
-                  lastItem!!.setIsTimestamp(false)
-                  lastItem!!.notifyChanged()
-                }
-
-                if (!CompareHelper.isSameDay(lastItem!!.message.timestamp, chatMessage.timestamp)) {
-                  messageSection.add(DateDivider(chatMessage.timestamp))
-                }
-              } else {
-                Log.d("test", "less than 0 ")
-                messageSection.add(DateDivider(chatMessage.timestamp))
-                isPhoto = true
-              }
-
-              messageSection.add(TextMessage(chatMessage, uid, isPhoto, true))
-              recycler_view_direct_messages_log.apply {
-                setItemViewCacheSize(adapter!!.itemCount - 1)
-                scrollToPosition(adapter!!.itemCount - 1)
-              }
-              return@addSnapshotListener
-            }
-          }
-        }
-        if (isInit) {
-          if (items.isNotEmpty()) adapter.add(DateDivider((items.first() as TextMessage).message.timestamp))
-
-          messageSection = Section(items)
-          adapter.add(messageSection)
-          isInit = false
-          recycler_view_direct_messages_log.apply {
-            setHasFixedSize(true)
-            adapter = adapter
-            setItemViewCacheSize(adapter!!.itemCount)
-            scrollToPosition(adapter!!.itemCount - 1)
-          }
-        }
-      }
   }
 
   private fun sendMessage(toUser: User) {

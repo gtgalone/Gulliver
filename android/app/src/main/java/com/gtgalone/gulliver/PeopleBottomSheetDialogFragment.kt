@@ -2,24 +2,22 @@ package com.gtgalone.gulliver
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.gtgalone.gulliver.models.User
 import com.squareup.picasso.Picasso
-import kotlinx.android.synthetic.main.people_bottom_sheet_dialog_fragment.view.*
+import kotlinx.android.synthetic.main.fragment_people_bottom_sheet_dialog.view.*
 
 class PeopleBottomSheetDialogFragment : BottomSheetDialogFragment() {
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
-    return inflater.inflate(R.layout.people_bottom_sheet_dialog_fragment, container, false)
+    return inflater.inflate(R.layout.fragment_people_bottom_sheet_dialog, container, false)
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
     val user = arguments!!.getParcelable<User>(MainActivity.USER_KEY) ?: return
-    Log.d("test", user.displayName)
 
     view.people_bottom_sheet_dialog_fragment_display_name.text = user.displayName
     Picasso.get().load(user.photoUrl).fit().centerCrop().into(view.people_bottom_sheet_dialog_fragment_photo)

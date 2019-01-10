@@ -11,23 +11,16 @@
         tools:showIn="@layout/app_bar_direct_messages_log"
         tools:context=".DirectMessagesLogActivity">
 
-    <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_view_direct_messages_log"
+    <FrameLayout
+            android:id="@+id/fragment_recycler_view_direct_messages_log"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@color/colorWhite"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:stackFromEnd="true"
-            app:fastScrollEnabled="true"
-            app:fastScrollHorizontalThumbDrawable="@drawable/fast_scroll_thumb"
-            app:fastScrollHorizontalTrackDrawable="@drawable/fast_scroll_track"
-            app:fastScrollVerticalThumbDrawable="@drawable/fast_scroll_thumb"
-            app:fastScrollVerticalTrackDrawable="@drawable/fast_scroll_track"
             app:layout_constraintBottom_toTopOf="@+id/direct_messages_log_edit_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"/>
 
     <EditText
             android:id="@+id/direct_messages_log_edit_text"
@@ -43,7 +36,7 @@
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/recycler_view_direct_messages_log"
+            app:layout_constraintTop_toBottomOf="@+id/fragment_recycler_view_direct_messages_log"
             app:layout_constraintEnd_toStartOf="@+id/direct_messages_log_send_button" />
 
     <ImageView
@@ -52,7 +45,7 @@
             app:srcCompat="@android:drawable/ic_menu_send"
             android:id="@+id/direct_messages_log_send_button"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/recycler_view_direct_messages_log"
+            app:layout_constraintTop_toBottomOf="@+id/fragment_recycler_view_direct_messages_log"
             android:padding="6dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

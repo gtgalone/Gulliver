@@ -5,8 +5,6 @@
         android:id="@+id/recycler_view_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:stackFromEnd="true"
         app:fastScrollEnabled="true"
         app:fastScrollHorizontalThumbDrawable="@drawable/fast_scroll_thumb"
         app:fastScrollHorizontalTrackDrawable="@drawable/fast_scroll_track"

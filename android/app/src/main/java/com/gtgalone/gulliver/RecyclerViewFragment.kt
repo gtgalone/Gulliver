@@ -49,6 +49,8 @@ class RecyclerViewFragment : Fragment() {
     recyclerView = rootView.findViewById(R.id.recycler_view_fragment)
 
     layoutManager = LinearLayoutManager(activity)
+    (layoutManager as LinearLayoutManager).stackFromEnd = true
+    recyclerView.layoutManager = layoutManager
 
     currentLayoutManagerType = LayoutManagerType.LINEAR_LAYOUT_MANAGER
 
@@ -206,7 +208,7 @@ class RecyclerViewFragment : Fragment() {
 //                    lastItem!!.isPhoto,
 //                    false,
 //                    lastItem!!.message)
-                  adapter.notifyItemRangeChanged(dataset.size - 1, 5)
+                  adapter.notifyItemChanged(dataset.size - 1)
                 }
 
                 if (!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
@@ -219,13 +221,11 @@ class RecyclerViewFragment : Fragment() {
 
               lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, true, chatMessage)
 
-              Log.d("test", "$isPhoto")
               dataset.add(lastItem!!)
               adapter.notifyItemInserted(dataset.size - 1)
-              adapter.notifyItemChanged(dataset.size - 1)
 
               recyclerView.apply {
-                setItemViewCacheSize(0)
+                setItemViewCacheSize(adapter.itemCount - 1)
                 scrollToPosition(adapter.itemCount - 1)
               }
               return@addSnapshotListener

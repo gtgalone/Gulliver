@@ -99,7 +99,7 @@ class RecyclerViewFragment : Fragment() {
                     val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
 
                     if (lastItem == null && it.documents.count() < messagePerPage) {
-                      lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, true, true, chatMessage)
+                      lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, true, chatMessage)
                       dataset.add(lastItem!!)
 
                       return@forEachReversedByIndex
@@ -123,7 +123,7 @@ class RecyclerViewFragment : Fragment() {
                       isPhoto = true
                     }
 
-                    lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, true, message = chatMessage)
+                    lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, chatMessage)
 
                     dataset.add(lastItem!!)
                   }
@@ -161,35 +161,29 @@ class RecyclerViewFragment : Fragment() {
 
         querySnapshot!!.documentChanges.forEachReversedByIndex { it ->
           val chatMessage = it.document.toObject(ChatMessage::class.java)
-          var isPhoto = false
+          var isPhoto: Boolean
 
           if (isInit) {
-            Log.d("test", "${querySnapshot.documentChanges.count()}")
             if (lastItem == null && querySnapshot.documentChanges.count() < messagePerPage) {
-              lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, true, true, message = chatMessage)
+              lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, true, chatMessage)
               dataset.add(lastItem!!)
-
               return@forEachReversedByIndex
             } else if (lastItem == null) {
               lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, message = chatMessage)
               return@forEachReversedByIndex
             }
 
-            isPhoto = lastItem!!.message!!.fromId != chatMessage.fromId
-
-            if (CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
-              lastItem!!.setIsTimestamp(false)
-            }
+            isPhoto = !CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)
+              .and(lastItem!!.message!!.fromId == chatMessage.fromId)
 
             if (!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
               dataset.add(AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = chatMessage))
               isPhoto = true
             }
 
-            lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, true, message = chatMessage)
+            lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, chatMessage)
 
             dataset.add(lastItem!!)
-            adapter.notifyDataSetChanged()
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
 
@@ -197,19 +191,8 @@ class RecyclerViewFragment : Fragment() {
                 if (dataset[dataset.size - 1].type != AdapterItemMessage.TYPE_TEXT_MESSAGE) return@forEachReversedByIndex
                 if (lastItem == null) lastItem = dataset[dataset.size - 1]
 
-                isPhoto = lastItem!!.message!!.fromId != chatMessage.fromId
-
-                if (CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
-                  Log.d("test", "${dataset.size - 1}")
-
-//                  dataset[dataset.size - 1] = AdapterItemMessage(
-//                    AdapterItemMessage.TYPE_TEXT_MESSAGE,
-//                    lastItem!!.uid,
-//                    lastItem!!.isPhoto,
-//                    false,
-//                    lastItem!!.message)
-                  adapter.notifyItemChanged(dataset.size - 1)
-                }
+                isPhoto = !CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)
+                  .and(lastItem!!.message!!.fromId == chatMessage.fromId)
 
                 if (!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
                   dataset.add(AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = chatMessage))
@@ -219,10 +202,10 @@ class RecyclerViewFragment : Fragment() {
                 isPhoto = true
               }
 
-              lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, true, chatMessage)
+              lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, chatMessage)
 
               dataset.add(lastItem!!)
-              adapter.notifyItemInserted(dataset.size - 1)
+              adapter.notifyItemInserted(dataset.lastIndex)
 
               recyclerView.apply {
                 setItemViewCacheSize(adapter.itemCount - 1)
@@ -234,11 +217,9 @@ class RecyclerViewFragment : Fragment() {
         }
         if (isInit) {
           if (dataset.isNotEmpty()) {
-            dataset[0] = AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = dataset.first().message)
-
-            adapter.notifyItemInserted(0)
+            dataset.add(0, AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = dataset.first().message))
           }
-
+          Log.d("test", "${dataset.size}")
           adapter.notifyDataSetChanged()
           isInit = false
           recyclerView.apply {

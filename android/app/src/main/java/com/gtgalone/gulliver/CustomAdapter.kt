@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
@@ -17,6 +18,7 @@ import com.google.firebase.database.ValueEventListener
 import com.gtgalone.gulliver.models.AdapterItemMessage
 import com.gtgalone.gulliver.models.User
 import com.squareup.picasso.Picasso
+import kotlinx.android.synthetic.main.fragment_people_bottom_sheet_dialog.view.*
 import kotlinx.android.synthetic.main.text_message.view.*
 import java.text.SimpleDateFormat
 
@@ -24,17 +26,22 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
   val uid = FirebaseAuth.getInstance().uid
 
   class ViewHolder(v: View, viewType: Int) : RecyclerView.ViewHolder(v) {
+    var imageViewPhoto: ImageView? = null
     var textViewMessage: TextView? = null
     var textViewDate: TextView? = null
+    var textViewDisplayName: TextView? = null
     var textViewDateDivider: TextView? = null
 
     init {
       v.setOnClickListener { Log.d(TAG, "Clicked $adapterPosition") }
+
       when (viewType) {
         AdapterItemMessage.TYPE_DATE_DIVIDER -> textViewDateDivider = v.findViewById(R.id.date_divider)
         else -> {
+          imageViewPhoto = v.findViewById(R.id.text_message_photo)
           textViewMessage = v.findViewById(R.id.text_message_message)
           textViewDate = v.findViewById(R.id.text_message_date)
+          textViewDisplayName = v.findViewById(R.id.text_message_display_name)
         }
       }
     }
@@ -56,8 +63,6 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
   }
 
   override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-
-    Log.d(TAG, "Element $position set ${dataset[position]}.")
     val item = dataset[position]
     when (item.type) {
       AdapterItemMessage.TYPE_DATE_DIVIDER -> {
@@ -68,10 +73,6 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
 
         holder.itemView.apply {
           holder.textViewMessage!!.text = message!!.text
-          if (item.isTimestamp) {
-            holder.textViewDate!!.text = SimpleDateFormat.getTimeInstance().format(message.timestamp)
-            holder.textViewDate!!.visibility = View.VISIBLE
-          }
 
           val constraintSet = ConstraintSet()
           constraintSet.clone(text_message_constraint_layout)
@@ -101,8 +102,16 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
             constraintSet.connect(
               R.id.text_message_date,
               ConstraintSet.START,
-              R.id.text_message_message,
-              ConstraintSet.START
+              R.id.text_message_display_name,
+              ConstraintSet.END,
+              16
+            )
+            constraintSet.connect(
+              R.id.text_message_display_name,
+              ConstraintSet.START,
+              R.id.text_message_photo,
+              ConstraintSet.END,
+              24
             )
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
@@ -116,25 +125,32 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
               text_message_message.background = ContextCompat.getDrawable(context, R.drawable.rounded_message_from)
             }
           } else {
+//            if (item.isPhoto!!) {
+              holder.textViewDate!!.text = SimpleDateFormat.getTimeInstance(SimpleDateFormat.SHORT).format(message.timestamp)
+              holder.textViewDate!!.visibility = View.VISIBLE
+//            }
+            holder.imageViewPhoto!!.visibility = View.GONE
+
             constraintSet.connect(
-              R.id.text_message_photo,
+              R.id.text_message_message,
               ConstraintSet.END,
               ConstraintSet.PARENT_ID,
               ConstraintSet.END,
               24
             )
             constraintSet.connect(
-              R.id.text_message_message,
-              ConstraintSet.END,
-              R.id.text_message_photo,
-              ConstraintSet.START,
-              24
-            )
-            constraintSet.connect(
               R.id.text_message_date,
               ConstraintSet.END,
               R.id.text_message_message,
-              ConstraintSet.END
+              ConstraintSet.END,
+              16
+            )
+            constraintSet.connect(
+              R.id.text_message_date,
+              ConstraintSet.BOTTOM,
+              R.id.text_message_message,
+              ConstraintSet.TOP,
+              16
             )
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
@@ -142,6 +158,8 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
             } else {
               text_message_message.background = ContextCompat.getDrawable(context, R.drawable.rounded_message_to)
             }
+            constraintSet.applyTo(text_message_constraint_layout)
+            return
           }
           constraintSet.applyTo(text_message_constraint_layout)
         }
@@ -150,11 +168,16 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
           val userRef = FirebaseDatabase.getInstance().getReference("/users/${message!!.fromId}")
           userRef.addListenerForSingleValueEvent(object: ValueEventListener {
             override fun onDataChange(p0: DataSnapshot) {
-              holder.itemView.apply {
-                Picasso.get().load(p0.getValue(User::class.java)!!.photoUrl)
-                  .placeholder(resources.getDrawable(R.drawable.background))
+              val user = p0.getValue(User::class.java) ?: return
+              holder.apply {
+                holder.textViewDate!!.text = SimpleDateFormat.getTimeInstance(SimpleDateFormat.SHORT).format(message.timestamp)
+                holder.textViewDate!!.visibility = View.VISIBLE
+                holder.textViewDisplayName!!.text = user.displayName
+                holder.textViewDisplayName!!.visibility = View.VISIBLE
+                Picasso.get().load(user.photoUrl)
+                  .placeholder(itemView.resources.getDrawable(R.drawable.background))
                   .fit().centerCrop()
-                  .into(text_message_photo)
+                  .into(itemView.text_message_photo)
               }
             }
             override fun onCancelled(p0: DatabaseError) {}

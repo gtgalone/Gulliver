@@ -142,6 +142,14 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
               0
             )
 
+            constraintSet.connect(
+              R.id.text_message_date,
+              ConstraintSet.BOTTOM,
+              R.id.text_message_message,
+              ConstraintSet.TOP,
+              0
+            )
+
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
               text_message_message.setBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.rounded_message_to))
             } else {
@@ -150,6 +158,7 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
             constraintSet.applyTo(text_message_constraint_layout)
 
             if (item.isPhoto!!) {
+              holder.textViewDisplayName!!.visibility = View.VISIBLE
               holder.textViewDate!!.visibility = View.VISIBLE
               holder.textViewDate!!.text = SimpleDateFormat.getTimeInstance(SimpleDateFormat.SHORT).format(message.timestamp)
             }

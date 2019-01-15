@@ -84,6 +84,7 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
           constraintSet.clear(R.id.text_message_photo, ConstraintSet.END)
           constraintSet.clear(R.id.text_message_message, ConstraintSet.END)
           constraintSet.clear(R.id.text_message_date, ConstraintSet.END)
+
           if (message.fromId != uid) {
             constraintSet.connect(
               R.id.text_message_photo,
@@ -125,12 +126,6 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
               text_message_message.background = ContextCompat.getDrawable(context, R.drawable.rounded_message_from)
             }
           } else {
-//            if (item.isPhoto!!) {
-              holder.textViewDate!!.text = SimpleDateFormat.getTimeInstance(SimpleDateFormat.SHORT).format(message.timestamp)
-              holder.textViewDate!!.visibility = View.VISIBLE
-//            }
-            holder.imageViewPhoto!!.visibility = View.GONE
-
             constraintSet.connect(
               R.id.text_message_message,
               ConstraintSet.END,
@@ -138,19 +133,13 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
               ConstraintSet.END,
               24
             )
+
             constraintSet.connect(
               R.id.text_message_date,
               ConstraintSet.END,
               R.id.text_message_message,
               ConstraintSet.END,
-              16
-            )
-            constraintSet.connect(
-              R.id.text_message_date,
-              ConstraintSet.BOTTOM,
-              R.id.text_message_message,
-              ConstraintSet.TOP,
-              16
+              0
             )
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
@@ -159,6 +148,12 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
               text_message_message.background = ContextCompat.getDrawable(context, R.drawable.rounded_message_to)
             }
             constraintSet.applyTo(text_message_constraint_layout)
+
+            if (item.isPhoto!!) {
+              holder.textViewDate!!.visibility = View.VISIBLE
+              holder.textViewDate!!.text = SimpleDateFormat.getTimeInstance(SimpleDateFormat.SHORT).format(message.timestamp)
+            }
+
             return
           }
           constraintSet.applyTo(text_message_constraint_layout)

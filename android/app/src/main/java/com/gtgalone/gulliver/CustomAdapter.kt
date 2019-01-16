@@ -65,6 +65,7 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
   override fun onBindViewHolder(holder: ViewHolder, position: Int) {
     val item = dataset[position]
     when (item.type) {
+      AdapterItemMessage.TYPE_MESSAGE_LOADER -> return
       AdapterItemMessage.TYPE_DATE_DIVIDER -> {
         holder.textViewDateDivider!!.text = SimpleDateFormat.getDateInstance().format(item.message!!.timestamp)
       }
@@ -135,7 +136,7 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
             )
 
             constraintSet.connect(
-              R.id.text_message_date,
+              R.id.text_message_display_name,
               ConstraintSet.END,
               R.id.text_message_message,
               ConstraintSet.END,
@@ -144,10 +145,10 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
 
             constraintSet.connect(
               R.id.text_message_date,
-              ConstraintSet.BOTTOM,
-              R.id.text_message_message,
-              ConstraintSet.TOP,
-              0
+              ConstraintSet.END,
+              R.id.text_message_display_name,
+              ConstraintSet.START,
+              16
             )
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
@@ -159,6 +160,7 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
 
             if (item.isPhoto!!) {
               holder.textViewDisplayName!!.visibility = View.VISIBLE
+              holder.textViewDisplayName!!.text = "Me"
               holder.textViewDate!!.visibility = View.VISIBLE
               holder.textViewDate!!.text = SimpleDateFormat.getTimeInstance(SimpleDateFormat.SHORT).format(message.timestamp)
             }

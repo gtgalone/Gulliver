@@ -50,6 +50,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
       val recyclerViewFragment = RecyclerViewFragment()
       val bundle = Bundle()
       bundle.putParcelable(MainActivity.USER_KEY, toUser)
+      bundle.putInt(MainActivity.CHAT_TYPE, 1)
       recyclerViewFragment.arguments = bundle
       supportFragmentManager.beginTransaction().run {
         replace(R.id.fragment_recycler_view_direct_messages_log, recyclerViewFragment)

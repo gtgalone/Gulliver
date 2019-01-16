@@ -66,41 +66,41 @@ class RecyclerViewFragment : Fragment() {
         when (newState) {
           RecyclerView.SCROLL_STATE_IDLE -> {
             if ((recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition() == 0) {
+
               if (
                 isLoading or
                 (dataset.size == 0) or
-                (dataset[0].type == 1)
+                (dataset[0].type == 0)
               ) return
 
-              dataset[0] = AdapterItemMessage(AdapterItemMessage.TYPE_MESSAGE_LOADER)
-
+              dataset.add(0, AdapterItemMessage(AdapterItemMessage.TYPE_MESSAGE_LOADER))
               adapter.notifyItemInserted(0)
               recyclerView.scrollToPosition(0)
 
               isLoading = true
 
-              val lastTopItem = dataset[0]
+              val lastTopItem = dataset[2]
 
               chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING)
                 .startAfter(lastTopItem.message!!.timestamp).limit(messagePerPage).get()
                 .addOnSuccessListener {
                   if (it.documents.isEmpty()) {
-                    dataset.drop(1)
+                    dataset.removeAt(0)
                     adapter.notifyItemRemoved(0)
                     return@addOnSuccessListener
                   }
-                  dataset.drop(1)
+                  dataset.removeAt(0)
                   adapter.notifyItemRemoved(0)
 
-                  val headDateDivider = dataset[0]
                   var lastItem: AdapterItemMessage? = null
 
+                  val items = mutableListOf<AdapterItemMessage>()
                   it.documents.forEachReversedByIndex { docSnapshot ->
                     val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
 
                     if (lastItem == null && it.documents.count() < messagePerPage) {
                       lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, true, chatMessage)
-                      dataset.add(lastItem!!)
+                      items.add(lastItem!!)
 
                       return@forEachReversedByIndex
                     } else if (lastItem == null) {
@@ -109,37 +109,26 @@ class RecyclerViewFragment : Fragment() {
                       return@forEachReversedByIndex
                     }
 
-                    var isPhoto = lastItem!!.message!!.fromId != chatMessage.fromId
-
-                    if (CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
-//                      lastItem!!.setIsTimestamp(false)
-//                      lastItem!!.notifyChanged()
-                    }
+                    var isPhoto = !CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)
+                      .and(lastItem!!.message!!.fromId == chatMessage.fromId)
 
                     if (!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
-                      val index = dataset.size - 1
-                      dataset[index] = AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = chatMessage)
-                      adapter.notifyItemInserted(index)
+                      items.add(AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = chatMessage))
                       isPhoto = true
                     }
 
                     lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, chatMessage)
-
-                    dataset.add(lastItem!!)
+                    items.add(lastItem!!)
                   }
 
                   if (dataset.isNotEmpty()) {
-                    val currentTopMessage = dataset.first()
-//                    headDateDivider.setTimestamp(currentTopMessage.message.timestamp)
-//                    headDateDivider.notifyChanged()
-
-                    val currentBottomMessage = dataset.last()
-//                    currentBottomMessage.setIsTimestamp(!CompareHelper.isSameMinute(lastTopItem.message.timestamp, currentBottomMessage.message.timestamp))
-//                    currentBottomMessage.notifyChanged()
+                    val currentTopMessage = items.first()
+                    dataset[0] = AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = currentTopMessage.message)
+                    adapter.notifyItemChanged(0)
                   }
 
-//                  dataset.addAll(0, items)
-                  adapter.notifyDataSetChanged()
+                  dataset.addAll(1, items)
+                  adapter.notifyItemRangeInserted(1, items.count())
                   isLoading = false
                   recyclerView.apply {
                     setItemViewCacheSize(adapter.itemCount)
@@ -151,9 +140,17 @@ class RecyclerViewFragment : Fragment() {
       }
     })
 
-    val toUser = arguments!!.getParcelable<User>(MainActivity.USER_KEY) ?: return rootView
+    val chatType = arguments!!.getInt(MainActivity.CHAT_TYPE)
 
-    chatMessageRef = db.collection("directMessagesLog").document(uid).collection(toUser.uid)
+    if (chatType == 0) {
+      val currentUser = arguments!!.getParcelable<User>(MainActivity.USER_KEY) ?: return rootView
+      chatMessageRef = db.collection("cities").document(currentUser.currentCity!!)
+        .collection("channels").document(currentUser.currentChannel!!)
+        .collection("chatMessages")
+    } else {
+      val toUser = arguments!!.getParcelable<User>(MainActivity.USER_KEY) ?: return rootView
+      chatMessageRef = db.collection("directMessagesLog").document(uid).collection(toUser.uid)
+    }
 
     chatMessageRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(messagePerPage)
       .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
@@ -219,8 +216,6 @@ class RecyclerViewFragment : Fragment() {
           if (dataset.isNotEmpty()) {
             dataset.add(0, AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = dataset.first().message))
           }
-          Log.d("test", "${dataset.size}")
-          adapter.notifyDataSetChanged()
           isInit = false
           recyclerView.apply {
             setHasFixedSize(true)

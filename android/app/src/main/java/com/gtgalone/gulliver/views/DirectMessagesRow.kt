@@ -35,7 +35,7 @@ class DirectMessagesRow(val message: ChatMessage) : Item() {
         viewHolder.itemView.apply {
           direct_messages_row_display_name.text = user?.displayName
           direct_messages_row_latest_message.text = message.text
-          direct_messages_row_date.text = SimpleDateFormat.getInstance().format(message.timestamp)
+          direct_messages_row_date.text = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.MEDIUM, SimpleDateFormat.SHORT).format(message.timestamp)
           Picasso.get().load(user?.photoUrl).into(direct_messages_row_photo)
         }
       }

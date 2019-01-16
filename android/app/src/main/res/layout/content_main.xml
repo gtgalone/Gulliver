@@ -11,16 +11,15 @@
         tools:showIn="@layout/app_bar_main"
         tools:context=".MainActivity">
 
-    <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_view_main_activity_log"
+    <FrameLayout
+            android:id="@+id/fragment_recycler_view_main_activity_log"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@color/colorWhite"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:stackFromEnd="true"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toTopOf="@+id/main_activity_log_edit_text"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
 
     <EditText
@@ -45,7 +44,7 @@
             app:srcCompat="@android:drawable/ic_menu_send"
             android:id="@+id/main_activity_log_send_button"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/recycler_view_main_activity_log"
+            app:layout_constraintTop_toBottomOf="@+id/fragment_recycler_view_main_activity_log"
             android:padding="6dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

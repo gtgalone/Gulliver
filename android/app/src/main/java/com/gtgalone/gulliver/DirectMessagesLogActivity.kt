@@ -1,30 +1,19 @@
 package com.gtgalone.gulliver
 
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.DocumentChange
-import com.gtgalone.gulliver.views.TextMessage
 import com.gtgalone.gulliver.models.User
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.gson.Gson
-import com.gtgalone.gulliver.helper.CompareHelper
 import com.gtgalone.gulliver.models.ChatMessage
-import com.gtgalone.gulliver.views.DateDivider
-import com.gtgalone.gulliver.views.MessageLoading
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.Section
 import com.xwray.groupie.ViewHolder
 import com.xwray.groupie.kotlinandroidextensions.Item
 import kotlinx.android.synthetic.main.app_bar_direct_messages_log.*
 import kotlinx.android.synthetic.main.content_direct_messages_log.*
-import org.jetbrains.anko.collections.forEachReversedByIndex
 
 class DirectMessagesLogActivity : AppCompatActivity() {
 

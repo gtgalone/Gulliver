@@ -9,10 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.DocumentChange
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.*
 import com.gtgalone.gulliver.helper.CompareHelper
 import com.gtgalone.gulliver.models.AdapterItemMessage
 import com.gtgalone.gulliver.models.ChatMessage
@@ -20,26 +17,20 @@ import com.gtgalone.gulliver.models.User
 import org.jetbrains.anko.collections.forEachReversedByIndex
 
 class RecyclerViewFragment : Fragment() {
-
   private lateinit var currentLayoutManagerType: LayoutManagerType
   private lateinit var recyclerView: RecyclerView
   private lateinit var layoutManager: RecyclerView.LayoutManager
-  private lateinit var dataset: ArrayList<AdapterItemMessage>
+  private lateinit var chatMessageRef: CollectionReference
 
+  private val dataset: ArrayList<AdapterItemMessage> = arrayListOf()
+  private val adapter = CustomAdapter(dataset)
   private val uid = FirebaseAuth.getInstance().uid!!
   private val db = FirebaseFirestore.getInstance()
-
-  private lateinit var chatMessageRef: CollectionReference
   private val messagePerPage = 21L
   private var isInit = true
   private var isLoading = false
 
   enum class LayoutManagerType { LINEAR_LAYOUT_MANAGER }
-
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    dataset = arrayListOf()
-  }
 
   override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
     val rootView = inflater.inflate(R.layout.fragment_recycler_view, container, false).apply {
@@ -57,8 +48,6 @@ class RecyclerViewFragment : Fragment() {
     if (savedInstanceState != null) {
       currentLayoutManagerType = savedInstanceState.getSerializable(KEY_LAYOUT_MANAGER) as LayoutManagerType
     }
-
-    val adapter = CustomAdapter(dataset)
 
     recyclerView.addOnScrollListener(object: RecyclerView.OnScrollListener() {
       override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -112,6 +101,8 @@ class RecyclerViewFragment : Fragment() {
                     var isPhoto = !CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)
                       .and(lastItem!!.message!!.fromId == chatMessage.fromId)
 
+                    Log.d("test", "changed ${!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)}")
+
                     if (!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
                       items.add(AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = chatMessage))
                       isPhoto = true
@@ -131,7 +122,7 @@ class RecyclerViewFragment : Fragment() {
                   adapter.notifyItemRangeInserted(1, items.count())
                   isLoading = false
                   recyclerView.apply {
-                    setItemViewCacheSize(adapter.itemCount)
+                    setItemViewCacheSize(adapter!!.itemCount)
                   }
                 }
             }
@@ -158,12 +149,14 @@ class RecyclerViewFragment : Fragment() {
 
         querySnapshot!!.documentChanges.forEachReversedByIndex { it ->
           val chatMessage = it.document.toObject(ChatMessage::class.java)
+
           var isPhoto: Boolean
 
           if (isInit) {
             if (lastItem == null && querySnapshot.documentChanges.count() < messagePerPage) {
               lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, true, chatMessage)
               dataset.add(lastItem!!)
+              adapter.notifyItemInserted(dataset.lastIndex)
               return@forEachReversedByIndex
             } else if (lastItem == null) {
               lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, message = chatMessage)
@@ -175,6 +168,7 @@ class RecyclerViewFragment : Fragment() {
 
             if (!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
               dataset.add(AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = chatMessage))
+              adapter.notifyItemInserted(dataset.lastIndex)
               isPhoto = true
             }
 
@@ -183,7 +177,6 @@ class RecyclerViewFragment : Fragment() {
             dataset.add(lastItem!!)
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
-
               if (dataset.size > 0) {
                 if (dataset[dataset.size - 1].type != AdapterItemMessage.TYPE_TEXT_MESSAGE) return@forEachReversedByIndex
                 if (lastItem == null) lastItem = dataset[dataset.size - 1]
@@ -193,9 +186,11 @@ class RecyclerViewFragment : Fragment() {
 
                 if (!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
                   dataset.add(AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = chatMessage))
+                  adapter.notifyItemInserted(dataset.lastIndex)
                 }
               } else {
                 dataset.add(AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = chatMessage))
+                adapter.notifyItemInserted(dataset.lastIndex)
                 isPhoto = true
               }
 
@@ -205,10 +200,10 @@ class RecyclerViewFragment : Fragment() {
               adapter.notifyItemInserted(dataset.lastIndex)
 
               recyclerView.apply {
-                setItemViewCacheSize(adapter.itemCount - 1)
-                scrollToPosition(adapter.itemCount - 1)
+                val count = adapter!!.itemCount
+                setItemViewCacheSize(count)
+                scrollToPosition(count - 1)
               }
-              return@addSnapshotListener
             }
           }
         }
@@ -219,9 +214,10 @@ class RecyclerViewFragment : Fragment() {
           isInit = false
           recyclerView.apply {
             setHasFixedSize(true)
-            this.adapter = adapter
-            setItemViewCacheSize(adapter.itemCount)
-            scrollToPosition(adapter.itemCount - 1)
+            adapter = this@RecyclerViewFragment.adapter
+            val count = dataset.count()
+            setItemViewCacheSize(count)
+            scrollToPosition(count - 1)
           }
         }
       }

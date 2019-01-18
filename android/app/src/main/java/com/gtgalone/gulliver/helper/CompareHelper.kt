@@ -1,5 +1,8 @@
 package com.gtgalone.gulliver.helper
 
+import android.util.Log
+import java.text.SimpleDateFormat
+
 class CompareHelper {
 
   companion object {
@@ -7,10 +10,8 @@ class CompareHelper {
       val formulaMinute = 60000
       return (v1 / formulaMinute) == (v2 / formulaMinute)
     }
-
     fun isSameDay(v1: Long, v2: Long): Boolean {
-      val formulaDay = 1000 * 60 * 60 * 24
-      return (v1 / formulaDay) == (v2 / formulaDay)
+      return SimpleDateFormat.getDateInstance().format(v1) == SimpleDateFormat.getDateInstance().format(v2)
     }
   }
 }

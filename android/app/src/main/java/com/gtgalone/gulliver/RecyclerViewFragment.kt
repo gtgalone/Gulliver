@@ -101,8 +101,6 @@ class RecyclerViewFragment : Fragment() {
                     var isPhoto = !CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)
                       .and(lastItem!!.message!!.fromId == chatMessage.fromId)
 
-                    Log.d("test", "changed ${!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)}")
-
                     if (!CompareHelper.isSameDay(lastItem!!.message!!.timestamp, chatMessage.timestamp)) {
                       items.add(AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = chatMessage))
                       isPhoto = true

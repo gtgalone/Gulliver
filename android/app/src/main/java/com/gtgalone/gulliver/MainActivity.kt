@@ -52,7 +52,6 @@ class MainActivity : AppCompatActivity() {
 
     setTitleForActionBar(currentCity)
 
-
     if (savedInstanceState == null) {
       fetchCurrentUser()
       fetchUsers(currentCity.id)

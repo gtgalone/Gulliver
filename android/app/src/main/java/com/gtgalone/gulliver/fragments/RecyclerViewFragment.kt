@@ -1,7 +1,6 @@
-package com.gtgalone.gulliver
+package com.gtgalone.gulliver.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +9,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
+import com.gtgalone.gulliver.CustomAdapter
+import com.gtgalone.gulliver.MainActivity
+import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.helper.CompareHelper
 import com.gtgalone.gulliver.models.AdapterItemMessage
 import com.gtgalone.gulliver.models.ChatMessage
@@ -43,7 +45,8 @@ class RecyclerViewFragment : Fragment() {
     (layoutManager as LinearLayoutManager).stackFromEnd = true
     recyclerView.layoutManager = layoutManager
 
-    currentLayoutManagerType = LayoutManagerType.LINEAR_LAYOUT_MANAGER
+    currentLayoutManagerType =
+        LayoutManagerType.LINEAR_LAYOUT_MANAGER
 
     if (savedInstanceState != null) {
       currentLayoutManagerType = savedInstanceState.getSerializable(KEY_LAYOUT_MANAGER) as LayoutManagerType

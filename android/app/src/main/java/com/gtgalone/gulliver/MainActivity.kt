@@ -5,7 +5,6 @@ import android.content.Intent
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -13,33 +12,23 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.google.firebase.firestore.*
-import com.google.firebase.firestore.Query
-import com.gtgalone.gulliver.helper.CompareHelper
+import com.gtgalone.gulliver.fragments.RecyclerViewFragment
+import com.gtgalone.gulliver.fragments.SendMessageFragment
 import com.gtgalone.gulliver.models.*
 import com.gtgalone.gulliver.views.*
 import com.squareup.picasso.Picasso
 import com.xwray.groupie.GroupAdapter
-import com.xwray.groupie.Section
 import com.xwray.groupie.ViewHolder
-import com.xwray.groupie.kotlinandroidextensions.Item
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main_left_drawer.*
 import kotlinx.android.synthetic.main.activity_main_cities_row.view.*
 import kotlinx.android.synthetic.main.app_bar_main.*
-import kotlinx.android.synthetic.main.content_main.*
-import org.jetbrains.anko.collections.forEachReversedByIndex
-import org.jetbrains.anko.collections.forEachReversedWithIndex
+import kotlinx.android.synthetic.main.fragment_send_message.*
 import org.jetbrains.anko.doAsync
 
 class MainActivity : AppCompatActivity() {
-  private lateinit var chatMessageRef: CollectionReference
-
-  private val db = FirebaseFirestore.getInstance()
   private var isInit = true
   private var isLoading = false
 
@@ -68,16 +57,12 @@ class MainActivity : AppCompatActivity() {
         super.onDrawerOpened(drawerView)
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(drawerView.windowToken, 0)
-        main_activity_log_edit_text.clearFocus()
+        edit_text.clearFocus()
       }
     }
 
     activity_main_layout.addDrawerListener(toggle)
     toggle.syncState()
-
-    main_activity_log_send_button.setOnClickListener {
-      sendMessage()
-    }
 
     activity_main_left_drawer_menu_image_view.setOnClickListener {
       val popup = PopupMenu(this@MainActivity, it)
@@ -100,11 +85,6 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  override fun onStop() {
-    main_activity_log_edit_text.clearFocus()
-    super.onStop()
-  }
-
   override fun onBackPressed() {
     if (activity_main_layout.isDrawerOpen(GravityCompat.START)) {
       activity_main_layout.closeDrawer(GravityCompat.START)
@@ -113,22 +93,6 @@ class MainActivity : AppCompatActivity() {
     } else {
       super.onBackPressed()
     }
-  }
-
-  private fun sendMessage() {
-    if (main_activity_log_edit_text.text.trim().isEmpty()) return
-
-    val body = main_activity_log_edit_text.text.toString()
-
-    chatMessageRef = db.collection("cities").document(currentUser!!.currentCity!!)
-      .collection("channels").document(currentUser!!.currentChannel!!)
-      .collection("chatMessages")
-
-    val key = chatMessageRef.document().id
-    chatMessageRef.document(key)
-      .set(ChatMessage(key, body, currentUser!!.uid, currentUser!!.currentChannel!!, System.currentTimeMillis()))
-
-    main_activity_log_edit_text.text.clear()
   }
 
   private fun changeActivity(activity: Class<*>, reset: Boolean = true) {
@@ -199,8 +163,12 @@ class MainActivity : AppCompatActivity() {
         bundle.putParcelable(MainActivity.USER_KEY, currentUser)
         bundle.putInt(MainActivity.CHAT_TYPE, 0)
         recyclerViewFragment.arguments = bundle
+
+        val sendMessageFragment = SendMessageFragment()
+        sendMessageFragment.arguments = bundle
         supportFragmentManager.beginTransaction().run {
           replace(R.id.fragment_recycler_view_main_activity_log, recyclerViewFragment)
+          replace(R.id.fragment_send_message_main_activity_log, sendMessageFragment)
           commit()
         }
       }

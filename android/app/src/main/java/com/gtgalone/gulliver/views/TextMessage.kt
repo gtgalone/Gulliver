@@ -26,7 +26,7 @@ class TextMessage(
 ) : Item() {
   override fun bind(viewHolder: ViewHolder, position: Int) {
     viewHolder.itemView.apply {
-      text_message_message.text = message.text
+      text_message_content.text = message.text
       if (isTimestamp) {
         text_message_date.text = SimpleDateFormat.getTimeInstance().format(message.timestamp)
         text_message_date.visibility = View.VISIBLE
@@ -36,11 +36,11 @@ class TextMessage(
       constraintSet.clone(text_message_constraint_layout)
 
       constraintSet.clear(R.id.text_message_photo, ConstraintSet.START)
-      constraintSet.clear(R.id.text_message_message, ConstraintSet.START)
+      constraintSet.clear(R.id.text_message_content, ConstraintSet.START)
       constraintSet.clear(R.id.text_message_date, ConstraintSet.START)
 
       constraintSet.clear(R.id.text_message_photo, ConstraintSet.END)
-      constraintSet.clear(R.id.text_message_message, ConstraintSet.END)
+      constraintSet.clear(R.id.text_message_content, ConstraintSet.END)
       constraintSet.clear(R.id.text_message_date, ConstraintSet.END)
       if (message.fromId != uid) {
         constraintSet.connect(
@@ -51,7 +51,7 @@ class TextMessage(
           24
         )
         constraintSet.connect(
-          R.id.text_message_message,
+          R.id.text_message_content,
           ConstraintSet.START,
           R.id.text_message_photo,
           ConstraintSet.END,
@@ -60,19 +60,19 @@ class TextMessage(
         constraintSet.connect(
           R.id.text_message_date,
           ConstraintSet.START,
-          R.id.text_message_message,
+          R.id.text_message_content,
           ConstraintSet.START
         )
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-          text_message_message.setBackgroundDrawable(
+          text_message_content.setBackgroundDrawable(
             ContextCompat.getDrawable(
               context,
               R.drawable.rounded_message_from
             )
           )
         } else {
-          text_message_message.background = ContextCompat.getDrawable(context, R.drawable.rounded_message_from)
+          text_message_content.background = ContextCompat.getDrawable(context, R.drawable.rounded_message_from)
         }
       } else {
         constraintSet.connect(
@@ -83,7 +83,7 @@ class TextMessage(
           24
         )
         constraintSet.connect(
-          R.id.text_message_message,
+          R.id.text_message_content,
           ConstraintSet.END,
           R.id.text_message_photo,
           ConstraintSet.START,
@@ -92,14 +92,14 @@ class TextMessage(
         constraintSet.connect(
           R.id.text_message_date,
           ConstraintSet.END,
-          R.id.text_message_message,
+          R.id.text_message_content,
           ConstraintSet.END
         )
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-          text_message_message.setBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.rounded_message_to))
+          text_message_content.setBackgroundDrawable(ContextCompat.getDrawable(context, R.drawable.rounded_message_to))
         } else {
-          text_message_message.background = ContextCompat.getDrawable(context, R.drawable.rounded_message_to)
+          text_message_content.background = ContextCompat.getDrawable(context, R.drawable.rounded_message_to)
         }
       }
       constraintSet.applyTo(text_message_constraint_layout)

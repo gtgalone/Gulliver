@@ -16,35 +16,17 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@color/colorWhite"
-            app:layout_constraintBottom_toTopOf="@+id/main_activity_log_edit_text"
+            app:layout_constraintBottom_toTopOf="@+id/fragment_send_message_main_activity_log"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
 
-    <EditText
-            android:id="@+id/main_activity_log_edit_text"
+    <FrameLayout
+            android:id="@+id/fragment_send_message_main_activity_log"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@color/colorSecondary"
-            android:ems="10"
-            android:hint="@string/enter_message"
-            android:inputType="textCapSentences|textNoSuggestions|textMultiLine"
-            android:minLines="1"
-            android:maxLines="3"
-            android:padding="12dp"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/main_activity_log_send_button"/>
-
-    <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            app:srcCompat="@android:drawable/ic_menu_send"
-            android:id="@+id/main_activity_log_send_button"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/fragment_recycler_view_main_activity_log"
-            android:padding="6dp"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

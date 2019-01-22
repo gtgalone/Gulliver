@@ -10,5 +10,6 @@ class AdapterItemMessage(
     const val TYPE_MESSAGE_LOADER = 0
     const val TYPE_DATE_DIVIDER = 1
     const val TYPE_TEXT_MESSAGE = 2
+    const val TYPE_IMAGE_MESSAGE = 3
   }
 }

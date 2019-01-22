@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Gulliver</string>
+    <string name="me">Me</string>
     <string name="no_location_detected">no location detected</string>
     <string name="main_activity_container">main activity</string>
     <string name="permission_rationale">permission rationale</string>
@@ -16,7 +17,8 @@
     <string name="clear">Clear</string>
     <string name="cities_row_admin_country">%1$s, %2$s</string>
     <string name="channel"># %1$s</string>
-    <string name='enter_message'>Enter Message</string>
+    <string name="enter_message">Enter Message</string>
+    <string name="send_message">Send Message</string>
     <string name="google_signin_button">Sign In with Google</string>
     <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
     <string name="default_notification_channel_name" translatable="true">Weather</string>

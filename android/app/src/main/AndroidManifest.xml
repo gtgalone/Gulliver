@@ -65,8 +65,7 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".AddCityActivity">
-        </activity>
+        <activity android:name=".AddCityActivity"/>
     </application>
 
 </manifest>

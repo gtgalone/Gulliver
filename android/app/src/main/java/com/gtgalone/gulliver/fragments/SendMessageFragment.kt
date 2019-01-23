@@ -15,10 +15,10 @@ import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.models.ChatMessage
 import com.gtgalone.gulliver.models.User
 import android.content.Intent
-import android.os.Environment
-import android.provider.MediaStore
 import android.util.Log
-import java.io.File
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
+import com.gtgalone.gulliver.InsertImageDialogFragment
 
 
 class SendMessageFragment : Fragment() {
@@ -53,7 +53,10 @@ class SendMessageFragment : Fragment() {
     }
 
     insertImage.setOnClickListener {
-      Log.d("test", MediaStore.Images.Media.query())
+      val intent = Intent()
+      intent.type = "image/*"
+      intent.action = Intent.ACTION_GET_CONTENT
+      startActivityForResult(Intent.createChooser(intent, "Select Picture"), 1)
     }
 
     return rootView
@@ -61,10 +64,17 @@ class SendMessageFragment : Fragment() {
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
-    if (resultCode == 0) {
+    Log.d("test", requestCode.toString() + resultCode.toString())
+
+    if (resultCode == -1) {
+      val dialogFragment = InsertImageDialogFragment()
+      val bundle = Bundle()
+      bundle.putString("aa", data!!.data.toString())
+      dialogFragment.arguments = bundle
+      dialogFragment.show(fragmentManager!!, "aa")
+      dialogFragment.
       Log.d("test", data!!.data.toString())
     }
-
   }
 
   override fun onStop() {

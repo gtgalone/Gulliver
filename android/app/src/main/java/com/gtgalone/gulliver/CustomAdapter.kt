@@ -12,12 +12,12 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
 import com.gtgalone.gulliver.models.AdapterItemMessage
 import com.gtgalone.gulliver.models.User
 import kotlinx.android.synthetic.main.text_message.view.*
@@ -168,10 +168,12 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
 
           when (message.messageType) {
             AdapterItemMessage.TYPE_IMAGE_MESSAGE -> {
-              Glide
-                .with(itemView.context)
-                .load("http://geographical.co.uk/media/k2/items/cache/b824f85901d9a92733484c4ba647e881_XL.jpg")
-                .into(holder.imageViewContent!!)
+
+              FirebaseStorage.getInstance().reference
+                .child(message.body!!).getBytes(1024*1024)
+                .addOnSuccessListener {
+                  Glide.with(itemView).load(it).into(holder.imageViewContent!!)
+                }
             }
             else -> {
               holder.textViewContent!!.text = message.body

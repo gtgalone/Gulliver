@@ -78,8 +78,7 @@ class SendMessageFragment : Fragment() {
             .child("imageMessages/${toUser.uid}/${UUID.randomUUID()}.png")
             .putFile(data.data!!)
             .addOnSuccessListener {
-              Log.d("test", it.uploadSessionUri.toString())
-              sendMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.uploadSessionUri.toString())
+              sendMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)
             }
         }
         .setNegativeButton("cancel") { dialog, which ->

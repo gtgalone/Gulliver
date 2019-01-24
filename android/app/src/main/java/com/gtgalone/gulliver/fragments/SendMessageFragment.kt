@@ -26,6 +26,8 @@ class SendMessageFragment : Fragment() {
   private val uid = FirebaseAuth.getInstance().uid!!
   private val db = FirebaseFirestore.getInstance()
 
+  private var chatType: Int? = null
+
   private lateinit var functions: FirebaseFunctions
   private lateinit var sendButton: ImageView
   private lateinit var editText: EditText
@@ -43,7 +45,7 @@ class SendMessageFragment : Fragment() {
     insertImage = rootView.findViewById(R.id.insert_message)
     toUser = arguments!!.getParcelable(MainActivity.USER_KEY) ?: return rootView
 
-    val chatType = arguments!!.getInt(MainActivity.CHAT_TYPE)
+    chatType = arguments!!.getInt(MainActivity.CHAT_TYPE)
 
     sendButton.setOnClickListener {
       if (chatType == MainActivity.CHAT_TYPE_MAIN) {
@@ -73,12 +75,16 @@ class SendMessageFragment : Fragment() {
       builder
         .setView(imageView)
         .setPositiveButton("send") { dialog, which ->
-          Log.d("test", "click good ${data.dataString}")
           FirebaseStorage.getInstance().reference
             .child("imageMessages/${toUser.uid}/${UUID.randomUUID()}.png")
             .putFile(data.data!!)
             .addOnSuccessListener {
-              sendMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)
+
+              if (chatType == MainActivity.CHAT_TYPE_MAIN) {
+                sendMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)
+              } else {
+                sendDirectMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)
+              }
             }
         }
         .setNegativeButton("cancel") { dialog, which ->

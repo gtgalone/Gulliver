@@ -31,7 +31,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
       val recyclerViewFragment = RecyclerViewFragment()
       val bundle = Bundle()
       bundle.putParcelable(MainActivity.USER_KEY, toUser)
-      bundle.putInt(MainActivity.CHAT_TYPE, 1)
+      bundle.putInt(MainActivity.CHAT_TYPE, MainActivity.CHAT_TYPE_DIRECT_MESSAGE)
       recyclerViewFragment.arguments = bundle
 
       val sendMessageFragment = SendMessageFragment()

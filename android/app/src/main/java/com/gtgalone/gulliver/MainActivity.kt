@@ -12,13 +12,13 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.PopupMenu
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.gtgalone.gulliver.fragments.RecyclerViewFragment
 import com.gtgalone.gulliver.fragments.SendMessageFragment
 import com.gtgalone.gulliver.models.*
 import com.gtgalone.gulliver.views.*
-import com.squareup.picasso.Picasso
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_main.*
@@ -154,14 +154,14 @@ class MainActivity : AppCompatActivity() {
     ref.addListenerForSingleValueEvent(object: ValueEventListener {
       override fun onDataChange(p0: DataSnapshot) {
         currentUser = p0.getValue(User::class.java) ?: return
-        Picasso.get().load(currentUser?.photoUrl).into(activity_main_left_drawer_circle_image_view)
+        Glide.with(this@MainActivity).load(currentUser?.photoUrl).into(activity_main_left_drawer_circle_image_view)
         activity_main_left_drawer_text_view.text = currentUser?.displayName
         fetchCities()
 
         val recyclerViewFragment = RecyclerViewFragment()
         val bundle = Bundle()
         bundle.putParcelable(MainActivity.USER_KEY, currentUser)
-        bundle.putInt(MainActivity.CHAT_TYPE, 0)
+        bundle.putInt(CHAT_TYPE, CHAT_TYPE_MAIN)
         recyclerViewFragment.arguments = bundle
 
         val sendMessageFragment = SendMessageFragment()
@@ -255,6 +255,8 @@ class MainActivity : AppCompatActivity() {
   companion object {
     const val USER_KEY = "USER_KEY"
     const val CHAT_TYPE = "CHAT_TYPE"
+    const val CHAT_TYPE_MAIN = 0
+    const val CHAT_TYPE_DIRECT_MESSAGE = 1
     var currentUser: User? = null
   }
 

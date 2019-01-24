@@ -3,9 +3,9 @@ package com.gtgalone.gulliver
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
+import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.gtgalone.gulliver.models.User
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_people_bottom_sheet_dialog.view.*
 
 class PeopleBottomSheetDialogFragment : BottomSheetDialogFragment() {
@@ -20,7 +20,7 @@ class PeopleBottomSheetDialogFragment : BottomSheetDialogFragment() {
     val user = arguments!!.getParcelable<User>(MainActivity.USER_KEY) ?: return
 
     view.people_bottom_sheet_dialog_fragment_display_name.text = user.displayName
-    Picasso.get().load(user.photoUrl).fit().centerCrop().into(view.people_bottom_sheet_dialog_fragment_photo)
+    Glide.with(view).load(user.photoUrl).into(view.people_bottom_sheet_dialog_fragment_photo)
     view.people_bottom_sheet_dialog_fragment_direct_message.setOnClickListener {
       val intent = Intent(view.context, DirectMessagesLogActivity::class.java)
       intent.putExtra(MainActivity.USER_KEY, user)

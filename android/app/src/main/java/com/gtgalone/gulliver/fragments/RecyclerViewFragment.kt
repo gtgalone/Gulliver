@@ -91,12 +91,12 @@ class RecyclerViewFragment : Fragment() {
                     val chatMessage = docSnapshot.toObject(ChatMessage::class.java) ?: return@forEachReversedByIndex
 
                     if (lastItem == null && it.documents.count() < messagePerPage) {
-                      lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, true, chatMessage)
+                      lastItem = AdapterItemMessage(chatMessage.messageType!!, uid, true, chatMessage)
                       items.add(lastItem!!)
 
                       return@forEachReversedByIndex
                     } else if (lastItem == null) {
-                      lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, message = chatMessage)
+                      lastItem = AdapterItemMessage(chatMessage.messageType!!, message = chatMessage)
 
                       return@forEachReversedByIndex
                     }
@@ -109,7 +109,7 @@ class RecyclerViewFragment : Fragment() {
                       isPhoto = true
                     }
 
-                    lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, chatMessage)
+                    lastItem = AdapterItemMessage(chatMessage.messageType!!, uid, isPhoto, chatMessage)
                     items.add(lastItem!!)
                   }
 
@@ -134,7 +134,7 @@ class RecyclerViewFragment : Fragment() {
 
     val chatType = arguments!!.getInt(MainActivity.CHAT_TYPE)
 
-    if (chatType == 0) {
+    if (chatType == MainActivity.CHAT_TYPE_MAIN) {
       val currentUser = arguments!!.getParcelable<User>(MainActivity.USER_KEY) ?: return rootView
       chatMessageRef = db.collection("cities").document(currentUser.currentCity!!)
         .collection("channels").document(currentUser.currentChannel!!)
@@ -155,12 +155,12 @@ class RecyclerViewFragment : Fragment() {
 
           if (isInit) {
             if (lastItem == null && querySnapshot.documentChanges.count() < messagePerPage) {
-              lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, true, chatMessage)
+              lastItem = AdapterItemMessage(chatMessage.messageType!!, uid, true, chatMessage)
               dataset.add(lastItem!!)
               adapter.notifyItemInserted(dataset.lastIndex)
               return@forEachReversedByIndex
             } else if (lastItem == null) {
-              lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, message = chatMessage)
+              lastItem = AdapterItemMessage(chatMessage.messageType!!, message = chatMessage)
               return@forEachReversedByIndex
             }
 
@@ -173,13 +173,13 @@ class RecyclerViewFragment : Fragment() {
               isPhoto = true
             }
 
-            lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, chatMessage)
+            lastItem = AdapterItemMessage(chatMessage.messageType!!, uid, isPhoto, chatMessage)
 
             dataset.add(lastItem!!)
           } else {
             if (it.type == DocumentChange.Type.ADDED) {
               if (dataset.size > 0) {
-                if (dataset[dataset.size - 1].type != AdapterItemMessage.TYPE_TEXT_MESSAGE) return@forEachReversedByIndex
+                if (dataset[dataset.size - 1].type != chatMessage.messageType!!) return@forEachReversedByIndex
                 if (lastItem == null) lastItem = dataset[dataset.size - 1]
 
                 isPhoto = !CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)
@@ -195,7 +195,7 @@ class RecyclerViewFragment : Fragment() {
                 isPhoto = true
               }
 
-              lastItem = AdapterItemMessage(AdapterItemMessage.TYPE_TEXT_MESSAGE, uid, isPhoto, chatMessage)
+              lastItem = AdapterItemMessage(chatMessage.messageType!!, uid, isPhoto, chatMessage)
 
               dataset.add(lastItem!!)
               adapter.notifyItemInserted(dataset.lastIndex)

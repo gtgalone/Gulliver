@@ -1,5 +1,6 @@
 package com.gtgalone.gulliver.views
 
+import com.bumptech.glide.Glide
 import com.gtgalone.gulliver.MainActivity
 import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.models.User
@@ -8,7 +9,6 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.gtgalone.gulliver.models.ChatMessage
-import com.squareup.picasso.Picasso
 import com.xwray.groupie.kotlinandroidextensions.Item
 import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.activity_direct_messages_row.view.*
@@ -34,9 +34,9 @@ class DirectMessagesRow(val message: ChatMessage) : Item() {
 
         viewHolder.itemView.apply {
           direct_messages_row_display_name.text = user?.displayName
-          direct_messages_row_latest_message.text = message.text
+          direct_messages_row_latest_message.text = message.body
           direct_messages_row_date.text = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.MEDIUM, SimpleDateFormat.SHORT).format(message.timestamp)
-          Picasso.get().load(user?.photoUrl).into(direct_messages_row_photo)
+          Glide.with(context).load(user?.photoUrl).into(direct_messages_row_photo)
         }
       }
 

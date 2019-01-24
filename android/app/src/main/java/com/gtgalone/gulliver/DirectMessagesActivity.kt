@@ -76,7 +76,7 @@ class DirectMessagesActivity : AppCompatActivity() {
         directMessages.clear()
         querySnapshot!!.documents.forEach { it ->
           val directMessage = it.toObject(ChatMessage::class.java) ?: return@forEach
-          Log.d("test", "add ${directMessage.text}")
+          Log.d("test", "add ${directMessage.body}")
           directMessages.add(DirectMessagesRow(directMessage))
         }
         refreshRecyclerViewMessage()

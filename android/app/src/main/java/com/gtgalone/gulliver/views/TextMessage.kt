@@ -1,10 +1,10 @@
 package com.gtgalone.gulliver.views
 
 import android.os.Build
-import android.util.Log
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
+import com.bumptech.glide.Glide
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -12,7 +12,6 @@ import com.google.firebase.database.ValueEventListener
 import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.models.ChatMessage
 import com.gtgalone.gulliver.models.User
-import com.squareup.picasso.Picasso
 import com.xwray.groupie.kotlinandroidextensions.Item
 import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.text_message.view.*
@@ -26,7 +25,7 @@ class TextMessage(
 ) : Item() {
   override fun bind(viewHolder: ViewHolder, position: Int) {
     viewHolder.itemView.apply {
-      text_message_content.text = message.text
+      text_message_content.text = message.body
       if (isTimestamp) {
         text_message_date.text = SimpleDateFormat.getTimeInstance().format(message.timestamp)
         text_message_date.visibility = View.VISIBLE
@@ -110,9 +109,8 @@ class TextMessage(
       userRef.addListenerForSingleValueEvent(object: ValueEventListener {
         override fun onDataChange(p0: DataSnapshot) {
           viewHolder.itemView.apply {
-            Picasso.get().load(p0.getValue(User::class.java)!!.photoUrl)
-              .placeholder(resources.getDrawable(R.drawable.background))
-              .fit().centerCrop()
+            Glide.with(context)
+              .load(p0.getValue(User::class.java)!!.photoUrl)
               .into(text_message_photo)
           }
         }

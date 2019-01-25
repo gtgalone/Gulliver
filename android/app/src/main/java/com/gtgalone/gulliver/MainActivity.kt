@@ -15,6 +15,7 @@ import androidx.core.view.GravityCompat
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.gtgalone.gulliver.fragments.PeopleBottomSheetDialogFragment
 import com.gtgalone.gulliver.fragments.RecyclerViewFragment
 import com.gtgalone.gulliver.fragments.SendMessageFragment
 import com.gtgalone.gulliver.models.*

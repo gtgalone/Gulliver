@@ -136,6 +136,43 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/people_bottom_sheet_dialog_fragment_unignore"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_weight="1">
+
+            <ImageView
+                    android:id="@+id/people_bottom_sheet_dialog_fragment_unignore_image_view"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginTop="16dp"
+                    app:srcCompat="@drawable/ic_unignore"
+                    app:layout_constraintEnd_toEndOf="@+id/people_bottom_sheet_dialog_fragment_unignore_text_view"
+                    app:layout_constraintStart_toStartOf="@+id/people_bottom_sheet_dialog_fragment_unignore_text_view"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+            <TextView
+                    android:id="@+id/people_bottom_sheet_dialog_fragment_unignore_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/unignore"
+                    android:textColor="@color/colorWhite"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginRight="8dp"
+                    app:layout_constraintTop_toBottomOf="@+id/people_bottom_sheet_dialog_fragment_unignore_image_view"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/people_bottom_sheet_dialog_fragment_direct_message"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"

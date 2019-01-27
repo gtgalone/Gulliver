@@ -36,7 +36,6 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
 
     init {
       v.setOnClickListener { Log.d(TAG, "Clicked $adapterPosition") }
-      Log.d("test", viewType.toString())
       when (viewType) {
         AdapterItemMessage.TYPE_DATE_DIVIDER -> textViewDateDivider = v.findViewById(R.id.date_divider)
         AdapterItemMessage.TYPE_IMAGE_MESSAGE -> {

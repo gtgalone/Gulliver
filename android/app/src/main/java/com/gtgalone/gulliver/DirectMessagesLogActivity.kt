@@ -1,15 +1,13 @@
 package com.gtgalone.gulliver
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.auth.FirebaseAuth
 import com.gtgalone.gulliver.models.User
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.functions.FirebaseFunctions
 import com.google.gson.Gson
-import com.gtgalone.gulliver.fragments.RecyclerViewFragment
+import com.gtgalone.gulliver.fragments.ChatRecyclerViewFragment
 import com.gtgalone.gulliver.fragments.SendMessageFragment
-import com.gtgalone.gulliver.models.ChatMessage
 import kotlinx.android.synthetic.main.app_bar_direct_messages_log.*
 
 class DirectMessagesLogActivity : AppCompatActivity() {
@@ -28,7 +26,7 @@ class DirectMessagesLogActivity : AppCompatActivity() {
     }
 
     if (savedInstanceState == null) {
-      val recyclerViewFragment = RecyclerViewFragment()
+      val recyclerViewFragment = ChatRecyclerViewFragment()
       val bundle = Bundle()
       bundle.putParcelable(MainActivity.USER_KEY, toUser)
       bundle.putInt(MainActivity.CHAT_TYPE, MainActivity.CHAT_TYPE_DIRECT_MESSAGE)
@@ -51,5 +49,19 @@ class DirectMessagesLogActivity : AppCompatActivity() {
   override fun onSupportNavigateUp(): Boolean {
     finish()
     return super.onSupportNavigateUp()
+  }
+
+  override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    menuInflater.inflate(R.menu.menu_direct_messages_log, menu)
+    return super.onCreateOptionsMenu(menu)
+  }
+
+  override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+    return when (item?.itemId) {
+      R.id.direct_messages_log_delete -> {
+        true
+      }
+      else -> super.onOptionsItemSelected(item)
+    }
   }
 }

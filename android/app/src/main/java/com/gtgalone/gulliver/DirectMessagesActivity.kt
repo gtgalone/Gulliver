@@ -74,9 +74,8 @@ class DirectMessagesActivity : AppCompatActivity() {
       .collection("directMessage").orderBy("timestamp", Query.Direction.DESCENDING)
       .addSnapshotListener { querySnapshot, firebaseFirestoreException ->
         directMessages.clear()
-        querySnapshot!!.documents.forEach { it ->
+        querySnapshot!!.documents.forEach {
           val directMessage = it.toObject(ChatMessage::class.java) ?: return@forEach
-          Log.d("test", "add ${directMessage.body}")
           directMessages.add(DirectMessagesRow(directMessage))
         }
         refreshRecyclerViewMessage()

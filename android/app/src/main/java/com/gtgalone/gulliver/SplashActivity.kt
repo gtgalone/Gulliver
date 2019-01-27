@@ -163,8 +163,6 @@ class SplashActivity : AppCompatActivity() {
       val adminArea = locationInformation.adminArea
       val locality = locationInformation.locality ?: locationInformation.adminArea
 
-      Log.d("test", locationInformation.toString())
-
       val name = countryCode.replace(" ", "").toLowerCase() + "-" +
           adminArea.replace(" ", "").toLowerCase() + "-" +
           locality.replace(" ", "").toLowerCase()

@@ -16,7 +16,7 @@ import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.gtgalone.gulliver.fragments.PeopleBottomSheetDialogFragment
-import com.gtgalone.gulliver.fragments.RecyclerViewFragment
+import com.gtgalone.gulliver.fragments.ChatRecyclerViewFragment
 import com.gtgalone.gulliver.fragments.SendMessageFragment
 import com.gtgalone.gulliver.models.*
 import com.gtgalone.gulliver.views.*
@@ -28,8 +28,12 @@ import kotlinx.android.synthetic.main.activity_main_cities_row.view.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.fragment_send_message.*
 import org.jetbrains.anko.doAsync
+import kotlin.coroutines.suspendCoroutine
 
 class MainActivity : AppCompatActivity() {
+  private val uid = FirebaseAuth.getInstance().uid
+
+  private lateinit var currentCity: MyCity
   private var isInit = true
   private var isLoading = false
 
@@ -38,7 +42,7 @@ class MainActivity : AppCompatActivity() {
     setContentView(R.layout.activity_main)
     setSupportActionBar(toolbar)
 
-    val currentCity = intent.getParcelableExtra<MyCity>(SplashActivity.CURRENT_CITY)
+    currentCity = intent.getParcelableExtra(SplashActivity.CURRENT_CITY)
 
     setTitleForActionBar(currentCity)
 
@@ -59,6 +63,12 @@ class MainActivity : AppCompatActivity() {
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(drawerView.windowToken, 0)
         edit_text.clearFocus()
+      }
+      override fun onDrawerClosed(drawerView: View) {
+        super.onDrawerClosed(drawerView)
+        if (drawerView.id == R.id.recycler_view_people) {
+          fetchUsers(currentCity.id)
+        }
       }
     }
 
@@ -121,14 +131,14 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  private fun setTitleForActionBar(currentCity: MyCity? = null) {
-    if (currentCity != null) {
-      supportActionBar?.title = currentCity.locality
+  private fun setTitleForActionBar(myCity: MyCity? = null) {
+    if (myCity != null) {
+      supportActionBar?.title = myCity.locality
 
-      if (currentCity.locality == currentCity.adminArea) {
-        supportActionBar?.subtitle = currentCity.countryCode
+      if (myCity.locality == myCity.adminArea) {
+        supportActionBar?.subtitle = myCity.countryCode
       } else {
-        supportActionBar?.subtitle = currentCity.adminArea + ", " + currentCity.countryCode
+        supportActionBar?.subtitle = myCity.adminArea + ", " + myCity.countryCode
       }
     } else {
       FirebaseDatabase.getInstance().getReference("/cities/${currentUser?.currentCity}")
@@ -149,7 +159,6 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun fetchCurrentUser() {
-    val uid = FirebaseAuth.getInstance().uid
     val ref = FirebaseDatabase.getInstance().getReference("/users/$uid")
 
     ref.addListenerForSingleValueEvent(object: ValueEventListener {
@@ -159,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         activity_main_left_drawer_text_view.text = currentUser?.displayName
         fetchCities()
 
-        val recyclerViewFragment = RecyclerViewFragment()
+        val recyclerViewFragment = ChatRecyclerViewFragment()
         val bundle = Bundle()
         bundle.putParcelable(MainActivity.USER_KEY, currentUser)
         bundle.putInt(CHAT_TYPE, CHAT_TYPE_MAIN)
@@ -180,22 +189,33 @@ class MainActivity : AppCompatActivity() {
   private fun fetchUsers(cityId: String?) {
     val ref = FirebaseDatabase.getInstance().getReference("/users").orderByChild("currentCity").equalTo(cityId)
 
+    val adapter = GroupAdapter<ViewHolder>()
+    recycler_view_people.adapter = adapter
+
     ref.addListenerForSingleValueEvent(object : ValueEventListener {
       override fun onDataChange(p0: DataSnapshot) {
-        val adapter = GroupAdapter<ViewHolder>()
         p0.children.forEach {
-          val user = it.getValue(User::class.java)
+          val user = it.getValue(User::class.java) ?: return@forEach
 
-          if (user != null) adapter.add(PeopleRow(user))
-          adapter.setOnItemClickListener { item, view ->
-            val bundle = Bundle()
-            bundle.putParcelable(USER_KEY, (item as PeopleRow).user)
-            val peopleBottomSheetDialogFragment = PeopleBottomSheetDialogFragment()
-            peopleBottomSheetDialogFragment.arguments = bundle
-            peopleBottomSheetDialogFragment.show(supportFragmentManager, peopleBottomSheetDialogFragment.tag)
-          }
+          if (user.uid == uid) return@forEach
+
+          FirebaseDatabase.getInstance().getReference("/users/$uid/ignoredBy/${user.uid}")
+            .addListenerForSingleValueEvent(object: ValueEventListener {
+              override fun onDataChange(p0: DataSnapshot) {
+                if (p0.value == null) {
+                  adapter.add(PeopleRow(user))
+                  adapter.setOnItemClickListener { item, view ->
+                    val bundle = Bundle()
+                    bundle.putParcelable(USER_KEY, (item as PeopleRow).user)
+                    val peopleBottomSheetDialogFragment = PeopleBottomSheetDialogFragment()
+                    peopleBottomSheetDialogFragment.arguments = bundle
+                    peopleBottomSheetDialogFragment.show(supportFragmentManager, peopleBottomSheetDialogFragment.tag)
+                  }
+                }
+              }
+              override fun onCancelled(p0: DatabaseError) {}
+            })
         }
-        recycler_view_people.adapter = adapter
       }
       override fun onCancelled(p0: DatabaseError) {}
     })
@@ -223,6 +243,7 @@ class MainActivity : AppCompatActivity() {
           setTitleForActionBar(item.city)
 
           doAsync {
+            currentCity = item.city
             fetchUsers(cityId)
 
             FirebaseDatabase.getInstance().getReference("/users/${currentUser?.uid}/currentCity")

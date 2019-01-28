@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/direct_messages_log_delete"
-        android:title="@string/sign_out"/>
+        android:id="@+id/direct_messages_log_leave_conversation"
+        android:title="@string/leave_conversation"/>
 </menu>

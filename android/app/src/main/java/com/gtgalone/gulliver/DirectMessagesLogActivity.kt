@@ -4,6 +4,9 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import com.gtgalone.gulliver.models.User
 import com.google.gson.Gson
 import com.gtgalone.gulliver.fragments.ChatRecyclerViewFragment
@@ -11,13 +14,18 @@ import com.gtgalone.gulliver.fragments.SendMessageFragment
 import kotlinx.android.synthetic.main.app_bar_direct_messages_log.*
 
 class DirectMessagesLogActivity : AppCompatActivity() {
+  private lateinit var functions: FirebaseFunctions
+  private lateinit var toUser: User
+
+  private val uid = FirebaseAuth.getInstance().uid!!
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_direct_messages_log)
     setSupportActionBar(toolbar_direct_messages_log)
 
-    val toUser: User
+    functions = FirebaseFunctions.getInstance()
+
     if (intent.getParcelableExtra<User>(MainActivity.USER_KEY) != null) {
       toUser = intent.getParcelableExtra(MainActivity.USER_KEY)
     } else {
@@ -58,7 +66,23 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
   override fun onOptionsItemSelected(item: MenuItem?): Boolean {
     return when (item?.itemId) {
-      R.id.direct_messages_log_delete -> {
+      R.id.direct_messages_log_leave_conversation -> {
+
+        FirebaseFirestore.getInstance().collection("directMessages").document(toUser.uid)
+          .collection("directMessage").document(uid).delete()
+
+        functions
+          .getHttpsCallable("recursiveDelete")
+          .call(hashMapOf("path" to "/directMessagesLog/${toUser.uid}/$uid"))
+          .continueWith { task ->
+            // This continuation runs on either success or failure, but if the task
+            // has failed then result will throw an Exception which will be
+            // propagated down.
+            val result = task.result?.data as String
+            result
+          }
+
+        finish()
         true
       }
       else -> super.onOptionsItemSelected(item)

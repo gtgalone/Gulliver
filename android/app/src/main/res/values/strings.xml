@@ -12,6 +12,7 @@
     <string name="report">Report</string>
     <string name="ignore">Ignore</string>
     <string name="unignore">Unignore</string>
+    <string name="leave_conversation">Leave Conversation</string>
     <string name="search">Search</string>
     <string name="search_city">Search City&#8230;</string>
     <string name="sign_out">Sign Out</string>

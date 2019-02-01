@@ -157,7 +157,7 @@ class SplashActivity : AppCompatActivity() {
       val latitude = location.latitude
       val longitude = location.longitude
 
-      val locationInformation = geo.getFromLocation(43.015851, -76.132164, 10)[0]
+      val locationInformation = geo.getFromLocation(51.509553, -0.131421, 10)[0]
 
       val countryCode = locationInformation.countryCode
       val adminArea = locationInformation.adminArea

@@ -16,7 +16,9 @@ import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.models.ChatMessage
 import com.gtgalone.gulliver.models.User
 import android.content.Intent
+import android.media.Image
 import android.util.Log
+import com.bumptech.glide.Glide
 import com.google.firebase.storage.FirebaseStorage
 import com.gtgalone.gulliver.models.AdapterItemMessage
 import java.util.*
@@ -72,11 +74,13 @@ class SendMessageFragment : Fragment() {
       val builder = AlertDialog.Builder(context, R.style.DialogTheme)
       val imageView = ImageView(context)
       imageView.setImageURI(data!!.data)
+      Log.d("test", data.data.toString())
+
       builder
         .setView(imageView)
         .setPositiveButton("send") { dialog, which ->
           FirebaseStorage.getInstance().reference
-            .child("imageMessages/${toUser.uid}/${UUID.randomUUID()}.png")
+            .child("imageMessages/${toUser.uid}/${UUID.randomUUID()}")
             .putFile(data.data!!)
             .addOnSuccessListener {
 

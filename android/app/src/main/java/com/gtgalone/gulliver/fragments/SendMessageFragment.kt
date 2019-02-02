@@ -1,6 +1,7 @@
 package com.gtgalone.gulliver.fragments
 
 import android.app.AlertDialog
+import android.content.ContentResolver
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,7 +17,10 @@ import com.gtgalone.gulliver.R
 import com.gtgalone.gulliver.models.ChatMessage
 import com.gtgalone.gulliver.models.User
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.Image
+import android.provider.MediaStore
 import android.util.Log
 import com.bumptech.glide.Glide
 import com.google.firebase.storage.FirebaseStorage
@@ -73,8 +77,12 @@ class SendMessageFragment : Fragment() {
     if (resultCode == -1) {
       val builder = AlertDialog.Builder(context, R.style.DialogTheme)
       val imageView = ImageView(context)
-      imageView.setImageURI(data!!.data)
-      Log.d("test", data.data.toString())
+
+      val bitmapImage = MediaStore.Images.Media.getBitmap(context!!.contentResolver, data!!.data)
+
+      val nh = bitmapImage.height * (768.0 / bitmapImage.width)
+
+      imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmapImage, 768, nh.toInt(), true))
 
       builder
         .setView(imageView)
@@ -83,7 +91,6 @@ class SendMessageFragment : Fragment() {
             .child("imageMessages/${toUser.uid}/${UUID.randomUUID()}")
             .putFile(data.data!!)
             .addOnSuccessListener {
-
               if (chatType == MainActivity.CHAT_TYPE_MAIN) {
                 sendMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)
               } else {

@@ -22,6 +22,7 @@ import android.graphics.BitmapFactory
 import android.media.Image
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.google.firebase.storage.FirebaseStorage
 import com.gtgalone.gulliver.models.AdapterItemMessage
@@ -74,11 +75,15 @@ class SendMessageFragment : Fragment() {
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
 
-    if (resultCode == -1) {
+    if (resultCode == -1 && data != null) {
+      if (!data.resolveType(context!!)!!.startsWith("image/")) {
+        Toast.makeText(context, getString(R.string.image_check_message), Toast.LENGTH_SHORT).show()
+        return
+      }
       val builder = AlertDialog.Builder(context, R.style.DialogTheme)
       val imageView = ImageView(context)
 
-      val bitmapImage = MediaStore.Images.Media.getBitmap(context!!.contentResolver, data!!.data)
+      val bitmapImage = MediaStore.Images.Media.getBitmap(context!!.contentResolver, data.data)
 
       val nh = bitmapImage.height * (768.0 / bitmapImage.width)
 

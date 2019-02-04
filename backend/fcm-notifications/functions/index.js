@@ -114,7 +114,6 @@ exports.recursiveDelete = functions
     memory: '2GB'
   })
   .https.onCall((data, context) => {
-    console.log('start!!')
     // Only allow admin users to execute this function.
     //  && context.auth.token && context.auth.token.admin
     if (!context.auth) {
@@ -123,7 +122,6 @@ exports.recursiveDelete = functions
         'Must be an administrative user to initiate delete.'
       )
     }
-    console.log('start2')
 
     const path = data.path;
     console.log(

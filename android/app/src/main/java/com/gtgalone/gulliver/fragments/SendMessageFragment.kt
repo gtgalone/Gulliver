@@ -22,10 +22,13 @@ import android.graphics.BitmapFactory
 import android.media.Image
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import com.gtgalone.gulliver.models.AdapterItemMessage
+import java.io.ByteArrayOutputStream
 import java.util.*
 
 
@@ -86,15 +89,18 @@ class SendMessageFragment : Fragment() {
       val bitmapImage = MediaStore.Images.Media.getBitmap(context!!.contentResolver, data.data)
 
       val nh = bitmapImage.height * (768.0 / bitmapImage.width)
-
       imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmapImage, 768, nh.toInt(), true))
 
       builder
         .setView(imageView)
         .setPositiveButton("send") { dialog, which ->
+
+          val stream = ByteArrayOutputStream()
+          bitmapImage.compress(Bitmap.CompressFormat.WEBP, 30, stream)
+
           FirebaseStorage.getInstance().reference
             .child("imageMessages/${toUser.uid}/${UUID.randomUUID()}")
-            .putFile(data.data!!)
+            .putBytes(stream.toByteArray(), StorageMetadata.Builder().setContentType("image/webp").build())
             .addOnSuccessListener {
               if (chatType == MainActivity.CHAT_TYPE_MAIN) {
                 sendMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)

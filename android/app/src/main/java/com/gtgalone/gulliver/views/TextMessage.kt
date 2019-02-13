@@ -10,6 +10,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.gtgalone.gulliver.R
+import com.gtgalone.gulliver.models.AdapterItemMessage
 import com.gtgalone.gulliver.models.ChatMessage
 import com.gtgalone.gulliver.models.User
 import com.xwray.groupie.kotlinandroidextensions.Item
@@ -31,7 +32,7 @@ class TextMessage(
         text_message_date.visibility = View.VISIBLE
       }
 
-      val constraintSet = ConstraintSet()
+     val constraintSet = ConstraintSet()
       constraintSet.clone(text_message_constraint_layout)
 
       constraintSet.clear(R.id.text_message_photo, ConstraintSet.START)

@@ -1,5 +1,6 @@
 package com.gtgalone.gulliver
 
+import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
@@ -20,6 +21,7 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.gtgalone.gulliver.models.AdapterItemMessage
 import com.gtgalone.gulliver.models.User
+import kotlinx.android.synthetic.main.activity_direct_messages.view.*
 import kotlinx.android.synthetic.main.text_message.view.*
 import java.text.SimpleDateFormat
 
@@ -172,7 +174,14 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
                 .child(message.body!!).getBytes(1024*1024)
                 .addOnSuccessListener {
                   Glide.with(itemView).load(it).into(holder.imageViewContent!!)
+
+                  imageViewContent!!.setOnClickListener { view ->
+                    val intent = Intent(view.context, ImageActivity::class.java)
+                    intent.putExtra("aa", it)
+                    view.context.startActivity(intent)
+                  }
                 }
+
             }
             else -> {
               holder.textViewContent!!.text = message.body

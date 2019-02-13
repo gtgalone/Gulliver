@@ -61,6 +61,9 @@
             </intent-filter>
         </activity>
 
+        <activity
+                android:name=".ImageActivity"/>
+
         <service
                 android:name=".services.MessageAlertService"
                 android:exported="false">

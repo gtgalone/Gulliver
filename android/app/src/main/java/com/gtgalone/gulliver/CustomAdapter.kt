@@ -74,6 +74,7 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
 
   override fun onBindViewHolder(holder: ViewHolder, position: Int) {
     val item = dataset[position]
+
     when (item.type) {
       AdapterItemMessage.TYPE_MESSAGE_LOADER -> return
       AdapterItemMessage.TYPE_DATE_DIVIDER -> {

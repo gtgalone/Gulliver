@@ -216,8 +216,8 @@ class ChatRecyclerViewFragment : Fragment() {
               dataset.add(lastItem!!)
             } else {
               if (it.type == DocumentChange.Type.ADDED) {
+
                 if (dataset.size > 0) {
-                  if (dataset[dataset.size - 1].type != chatMessage.messageType!!) return@forEachReversedByIndex
                   if (lastItem == null) lastItem = dataset[dataset.size - 1]
 
                   isPhoto = !CompareHelper.isSameMinute(lastItem!!.message!!.timestamp, chatMessage.timestamp)
@@ -246,6 +246,7 @@ class ChatRecyclerViewFragment : Fragment() {
               }
             }
           }
+
           if (isInit) {
             if (dataset.isNotEmpty()) {
               dataset.add(0, AdapterItemMessage(AdapterItemMessage.TYPE_DATE_DIVIDER, message = dataset.first().message))

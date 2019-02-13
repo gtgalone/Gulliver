@@ -51,7 +51,6 @@ class DirectMessagesLogActivity : AppCompatActivity() {
 
     supportActionBar!!.title = toUser.displayName
     supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-
   }
 
   override fun onSupportNavigateUp(): Boolean {

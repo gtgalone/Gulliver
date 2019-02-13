@@ -164,9 +164,6 @@ class MainActivity : AppCompatActivity() {
     ref.addListenerForSingleValueEvent(object: ValueEventListener {
       override fun onDataChange(p0: DataSnapshot) {
         currentUser = p0.getValue(User::class.java) ?: return
-        Glide.with(this@MainActivity).load(currentUser?.photoUrl).into(activity_main_left_drawer_circle_image_view)
-        activity_main_left_drawer_text_view.text = currentUser?.displayName
-        fetchCities()
 
         val recyclerViewFragment = ChatRecyclerViewFragment()
         val bundle = Bundle()
@@ -181,6 +178,10 @@ class MainActivity : AppCompatActivity() {
           replace(R.id.fragment_send_message_main_activity_log, sendMessageFragment)
           commit()
         }
+
+        Glide.with(this@MainActivity).load(currentUser?.photoUrl).into(activity_main_left_drawer_circle_image_view)
+        activity_main_left_drawer_text_view.text = currentUser?.displayName
+        fetchCities()
       }
       override fun onCancelled(p0: DatabaseError) {}
     })

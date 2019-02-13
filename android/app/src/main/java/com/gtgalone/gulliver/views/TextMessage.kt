@@ -27,6 +27,7 @@ class TextMessage(
   override fun bind(viewHolder: ViewHolder, position: Int) {
     viewHolder.itemView.apply {
       text_message_content.text = message.body
+
       if (isTimestamp) {
         text_message_date.text = SimpleDateFormat.getTimeInstance().format(message.timestamp)
         text_message_date.visibility = View.VISIBLE
@@ -42,6 +43,7 @@ class TextMessage(
       constraintSet.clear(R.id.text_message_photo, ConstraintSet.END)
       constraintSet.clear(R.id.text_message_content, ConstraintSet.END)
       constraintSet.clear(R.id.text_message_date, ConstraintSet.END)
+
       if (message.fromId != uid) {
         constraintSet.connect(
           R.id.text_message_photo,

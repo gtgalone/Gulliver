@@ -177,7 +177,7 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
 
                   imageViewContent!!.setOnClickListener { view ->
                     val intent = Intent(view.context, ImageActivity::class.java)
-                    intent.putExtra("aa", it)
+                    intent.putExtra(IMAGE_BYTE_ARRAY, it)
                     view.context.startActivity(intent)
                   }
                 }
@@ -220,5 +220,6 @@ class CustomAdapter(private val dataset: ArrayList<AdapterItemMessage>) : Recycl
 
   companion object {
     private const val TAG = "CustomAdapter"
+    const val IMAGE_BYTE_ARRAY = "ImageByteArray"
   }
 }

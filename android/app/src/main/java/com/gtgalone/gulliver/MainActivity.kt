@@ -28,7 +28,6 @@ import kotlinx.android.synthetic.main.activity_main_cities_row.view.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.fragment_send_message.*
 import org.jetbrains.anko.doAsync
-import kotlin.coroutines.suspendCoroutine
 
 class MainActivity : AppCompatActivity() {
   private val uid = FirebaseAuth.getInstance().uid

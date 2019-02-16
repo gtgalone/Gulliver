@@ -21,6 +21,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.Image
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
@@ -29,6 +30,8 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.gtgalone.gulliver.models.AdapterItemMessage
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.net.URLDecoder
 import java.util.*
 
 
@@ -97,17 +100,23 @@ class SendMessageFragment : Fragment() {
 
           val stream = ByteArrayOutputStream()
           bitmapImage.compress(Bitmap.CompressFormat.WEBP, 30, stream)
+          context!!.contentResolver.query(data.data!!, null, null, null, null)
+            ?.use {
+              val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+              it.moveToFirst()
 
-          FirebaseStorage.getInstance().reference
-            .child("imageMessages/${toUser.uid}/${UUID.randomUUID()}")
-            .putBytes(stream.toByteArray(), StorageMetadata.Builder().setContentType("image/webp").build())
-            .addOnSuccessListener {
-              if (chatType == MainActivity.CHAT_TYPE_MAIN) {
-                sendMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)
-              } else {
-                sendDirectMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)
-              }
+              FirebaseStorage.getInstance().reference
+                .child("imageMessages/${toUser.uid}/${UUID.randomUUID()}/${it.getString(nameIndex)}")
+                .putBytes(stream.toByteArray(), StorageMetadata.Builder().setContentType("image/webp").build())
+                .addOnSuccessListener {
+                  if (chatType == MainActivity.CHAT_TYPE_MAIN) {
+                    sendMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)
+                  } else {
+                    sendDirectMessage(toUser, AdapterItemMessage.TYPE_IMAGE_MESSAGE, it.metadata!!.path)
+                  }
+                }
             }
+
         }
         .setNegativeButton("cancel") { dialog, which ->
           dialog.cancel()

@@ -10,7 +10,7 @@ class ImageActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_image)
     setSupportActionBar(toolbar_image)
-    supportActionBar!!.title = "Image"
+    supportActionBar!!.title = intent.getStringExtra(CustomAdapter.IMAGE_NAME)
     supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
     Glide.with(this).load(intent.getByteArrayExtra(CustomAdapter.IMAGE_BYTE_ARRAY)).into(image)

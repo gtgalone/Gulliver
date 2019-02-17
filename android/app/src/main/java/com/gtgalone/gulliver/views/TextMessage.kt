@@ -125,10 +125,4 @@ class TextMessage(
   override fun getLayout(): Int {
     return R.layout.text_message
   }
-
-  fun setIsTimestamp(isTimestamp: Boolean) {
-    if (this.isTimestamp) {
-      this.isTimestamp = isTimestamp
-    }
-  }
 }

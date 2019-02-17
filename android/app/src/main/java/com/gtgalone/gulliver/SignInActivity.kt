@@ -32,7 +32,6 @@ class SignInActivity : AppCompatActivity() {
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
-    Log.d("test", "on create sign")
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_sign_in)
 

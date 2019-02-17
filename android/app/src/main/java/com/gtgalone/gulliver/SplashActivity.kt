@@ -179,7 +179,6 @@ class SplashActivity : AppCompatActivity() {
           .addOnSuccessListener {
             val channels = arrayListOf("general", "trade")
             for (channel in channels) {
-              Log.d("test", channel)
               db.collection("cities").document(city.id)
                 .collection("channels").document(channel)
                 .set(Channel(channel))

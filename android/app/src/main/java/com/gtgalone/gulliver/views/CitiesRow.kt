@@ -29,7 +29,6 @@ class CitiesRow(val city: MyCity, val user: User? = null) : Item() {
 
     if (user == null) return
     viewHolder.itemView.activity_main_cities_row_delete.setOnClickListener {
-      Log.d("test", "/users/${user.uid}/cities/${city.id}")
       FirebaseDatabase.getInstance().getReference("/users/${user.uid}/cities/${city.id}").removeValue()
     }
     if (city.id == user.currentCity) {
